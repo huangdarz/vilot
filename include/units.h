@@ -43,25 +43,6 @@
 
 #pragma once
 
-#undef _U
-#undef _L
-#undef _N
-#undef _S
-#undef _P
-#undef _C
-#undef _X
-#undef _B
-#define UNIT_LIB_DISABLE_IOSTREAM
-#define DISABLE_PREDEFINED_UNITS
-#define ENABLE_PREDEFINED_LENGTH_UNITS
-#define ENABLE_PREDEFINED_TIME_UNITS
-#define ENABLE_PREDEFINED_ANGLE_UNITS
-#define ENABLE_PREDEFINED_VELOCITY_UNITS
-#define ENABLE_PREDEFINED_ANGULAR_VELOCITY_UNITS
-#define ENABLE_PREDEFINED_ACCELERATION_UNITS
-#define ENABLE_PREDEFINED_VOLTAGE_UNITS
-#define UNIT_LIB_DEFAULT_TYPE float
-
 #ifndef units_h__
 #define units_h__
 
