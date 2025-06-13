@@ -25,7 +25,17 @@ EXTRA_CFLAGS=-U_U -U_L -U_N -U_S -U_P -U_C -U_X -U_B \
              -DENABLE_PREDEFINED_VOLTAGE_UNITS \
              -DENABLE_PREDEFINED_FREQUENCY_UNITS \
              -DUNIT_LIB_DEFAULT_TYPE=float \
-             -DEIGEN_DONT_VECTORIZE
+             -DEIGEN_DONT_VECTORIZE \
+             -DETL_TARGET_DEVICE_ARM \
+             -DETL_TARGET_OS_NONE \
+             -DTL_COMPILER_CLANG \
+             -DTL_CPP11_SUPPORTED=1 \
+             -DTL_CPP14_SUPPORTED=1 \
+             -DTL_CPP17_SUPPORTED=1 \
+             -DTL_NO_NULLPTR_SUPPORT=0 \
+             -DTL_NO_LARGE_CHAR_SUPPORT=0 \
+             -DTL_NO_SMALL_CHAR_SUPPORT=0 \
+             -DTL_CPP11_TYPE_TRAITS_IS_TRIVIAL_SUPPORTED=1
 
 EXTRA_CXXFLAGS=-U_U -U_L -U_N -U_S -U_P -U_C -U_X -U_B \
                -DUNIT_LIB_DISABLE_IOSTREAM \
@@ -39,7 +49,17 @@ EXTRA_CXXFLAGS=-U_U -U_L -U_N -U_S -U_P -U_C -U_X -U_B \
                -DENABLE_PREDEFINED_VOLTAGE_UNITS \
                -DENABLE_PREDEFINED_FREQUENCY_UNITS \
                -DUNIT_LIB_DEFAULT_TYPE=float \
-               -DEIGEN_DONT_VECTORIZE
+               -DEIGEN_DONT_VECTORIZE \
+               -DETL_TARGET_DEVICE_ARM \
+               -DETL_TARGET_OS_NONE \
+               -DTL_COMPILER_CLANG \
+               -DTL_CPP11_SUPPORTED=1 \
+               -DTL_CPP14_SUPPORTED=1 \
+               -DTL_CPP17_SUPPORTED=1 \
+               -DTL_NO_NULLPTR_SUPPORT=0 \
+               -DTL_NO_LARGE_CHAR_SUPPORT=0 \
+               -DTL_NO_SMALL_CHAR_SUPPORT=0 \
+               -DTL_CPP11_TYPE_TRAITS_IS_TRIVIAL_SUPPORTED=1
 
 # Set to 1 to enable hot/cold linking
 USE_PACKAGE:=1
