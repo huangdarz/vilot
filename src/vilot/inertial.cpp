@@ -1,4 +1,7 @@
 #include "vilot/inertial.h"
+#include "etl/circular_buffer.h"
+#include "pros/rtos.h"
+#include "pros/rtos.hpp"
 
 namespace vilot {
 
@@ -163,3 +166,81 @@ radian_t offset_angle(radian_t angle, radian_t offset) noexcept {
 }
 
 } // namespace vilot
+
+namespace vilot::device {
+
+Imu::Imu(const uint8_t port, const float beta)
+    : task(pros::Task::current()), inertial(port), filter(100.0_Hz, beta),
+      is_calibrating(true) {
+  this->task = pros::Task([this]() { this->update(); });
+}
+
+void Imu::reset(const radian_t yaw, const radian_t pitch, const radian_t roll) {
+  mut.lock();
+  this->filter.tare(yaw, pitch, roll);
+  mut.unlock();
+}
+
+void Imu::start() {
+  using namespace units::math;
+
+  this->inertial.reset(true);
+  this->task.notify();
+
+  etl::circular_buffer<radian_t, 100> window;
+
+  while (window.available()) {
+    mut.lock();
+    radian_t yaw = this->filter.yaw();
+    mut.unlock();
+    window.push(yaw);
+    pros::Task::delay(10);
+  }
+
+  auto pct_diff = [&window]() {
+    auto pct = abs((window.front() - window.back()) / window.front()).value();
+    return pct > 0.00005;
+  };
+
+  while (pct_diff()) {
+    mut.lock();
+    radian_t yaw = this->filter.yaw();
+    mut.unlock();
+    window.push(yaw);
+    pros::Task::delay(10);
+  }
+
+  this->mut.lock();
+  this->filter.tare();
+  this->mut.unlock();
+
+  this->is_calibrating = false;
+}
+
+degree_t Imu::get_heading() const {
+  mut.lock();
+  auto ret = this->filter.yaw();
+  mut.unlock();
+  return ret;
+}
+
+uint8_t Imu::get_port() const { return this->inertial.get_port(); }
+
+void Imu::update() {
+  this->task.notify_take(true, TIMEOUT_MAX);
+  auto start = pros::millis();
+  for (;;) {
+    const auto g = this->inertial.get_gyro_rate();
+    const auto a = this->inertial.get_accel();
+
+    mut.lock();
+    this->filter.calculate(degrees_per_second_t(g.x), degrees_per_second_t(g.y),
+                           degrees_per_second_t(g.z), standard_gravity_t(a.x),
+                           standard_gravity_t(a.y), standard_gravity_t(a.z));
+    mut.unlock();
+
+    pros::Task::delay_until(&start, 10);
+  }
+}
+
+} // namespace vilot::device

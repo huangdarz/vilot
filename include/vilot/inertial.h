@@ -1,7 +1,9 @@
 #pragma once
 
 #include "Eigen/Dense"
+#include "pros/imu.hpp"
 #include "units.h"
+#include <cstdint>
 
 namespace vilot {
 
@@ -209,3 +211,44 @@ units::angle::radian_t offset_angle(units::angle::radian_t angle,
                                     units::angle::radian_t offset) noexcept;
 
 } // namespace vilot
+
+namespace vilot::device {
+
+class Imu {
+  using radian_t = units::angle::radian_t;
+  using degree_t = units::angle::degree_t;
+  using radians_per_second_t = units::angular_velocity::radians_per_second_t;
+  using meters_per_second_squared_t =
+      units::acceleration::meters_per_second_squared_t;
+  using hertz_t = units::frequency::hertz_t;
+
+public:
+  Imu() = delete;
+  Imu(const Imu &) = delete;
+  Imu &operator=(const Imu &) = delete;
+  Imu(Imu &&) = delete;
+  Imu &operator=(Imu &&) = delete;
+
+  Imu(const uint8_t port, const float beta = 0.3);
+
+  void reset(const radian_t yaw = radian_t(0),
+             const radian_t pitch = radian_t(0),
+             const radian_t roll = radian_t(0));
+
+  void start();
+
+  degree_t get_heading() const;
+
+  uint8_t get_port() const;
+
+private:
+  void update();
+
+  pros::Task task;
+  pros::Imu inertial;
+  Madgwick filter;
+  bool is_calibrating;
+  mutable pros::Mutex mut;
+};
+
+} // namespace vilot::device
