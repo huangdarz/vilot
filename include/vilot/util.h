@@ -6,6 +6,10 @@
 
 namespace vilot {
 
+template <typename... Callable> struct Visitor : Callable... {
+  using Callable::operator()...;
+};
+
 struct Pose2d {
   using meter_t = units::length::meter_t;
   using radian_t = units::angle::radian_t;

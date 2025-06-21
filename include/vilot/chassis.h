@@ -40,10 +40,6 @@ struct Differential {
 
 namespace vilot::drivetrain {
 
-template <typename... Callable> struct Visitor : Callable... {
-  using Callable::operator()...;
-};
-
 struct DifferentialController {
   using meter_t = units::length::meter_t;
   using millimeter_t = units::length::millimeter_t;
