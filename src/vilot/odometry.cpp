@@ -58,7 +58,8 @@ void DeadReckoning::update(radian_t yaw, degree_t parallel,
 }
 
 Pose2d DeadReckoning::get_pose() {
-  return Pose2d(this->position, this->heading);
+  return Pose2d(millimeter_t(this->position.x()),
+                millimeter_t(this->position.y()), this->heading);
 }
 
 } // namespace vilot
