@@ -40,15 +40,15 @@ private:
 
 namespace vilot::device {
 
-class Odometry {
+class OdometryOld {
   using millimeter_t = units::length::millimeter_t;
   using degree_t = units::angle::degree_t;
 
 public:
-  Odometry(uint8_t imu, int8_t parallel, millimeter_t centre_displacement,
-           millimeter_t wheel_circumference,
-           std::optional<int8_t> perpendicular,
-           std::optional<millimeter_t> middle_distance);
+  OdometryOld(uint8_t imu, int8_t parallel, millimeter_t centre_displacement,
+              millimeter_t wheel_circumference,
+              std::optional<int8_t> perpendicular,
+              std::optional<millimeter_t> middle_distance);
 
   void start();
 

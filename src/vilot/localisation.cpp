@@ -1,13 +1,9 @@
-#include "vilot/odometry.h"
-#include "pros/rtos.h"
-#include "pros/rtos.hpp"
+#include "vilot/localisation.h"
 #include "units.h"
-#include "util.h"
 
-namespace vilot {
+namespace vilot::localisation {
 
-using namespace units::angle;
-using namespace units::length;
+using namespace units::time;
 
 DeadReckoning::DeadReckoning(millimeter_t centre_displacement,
                              millimeter_t middle_distance,
@@ -17,19 +13,19 @@ DeadReckoning::DeadReckoning(millimeter_t centre_displacement,
       wheel_circumference(wheel_circumference) {}
 
 void DeadReckoning::update(radian_t yaw, degree_t parallel,
-                           degree_t perpendicular) {
-  millimeter_t parallel_displacement =
-      millimeter_t(parallel() / (360.0 / this->wheel_circumference()));
-  millimeter_t perpendicular_displacement =
+                           degree_t perpendicular, second_t dt) {
+  meter_t parallel_displacement =
+      meter_t(parallel() / (360.0 / this->wheel_circumference()));
+  meter_t perpendicular_displacement =
       this->middle_distance()
-          ? millimeter_t(0.0)
-          : millimeter_t(perpendicular() / (360.0 / this->middle_distance()));
+          ? meter_t(0.0)
+          : meter_t(perpendicular() / (360.0 / this->middle_distance()));
 
-  millimeter_t delta_parallel_displacement =
+  meter_t delta_parallel_displacement =
       parallel_displacement - this->prev_parallel;
   this->prev_parallel = parallel_displacement;
 
-  millimeter_t delta_perpendicular_displacement =
+  meter_t delta_perpendicular_displacement =
       perpendicular_displacement - this->prev_perpendicular;
   this->prev_perpendicular = perpendicular_displacement;
 
@@ -55,22 +51,23 @@ void DeadReckoning::update(radian_t yaw, degree_t parallel,
   Eigen::Vector2f global_displacement = rot * local_displacement;
 
   this->position += global_displacement;
+  this->velocity = parallel_displacement / dt;
 }
 
-Pose2d DeadReckoning::get_pose() {
-  return Pose2d(millimeter_t(this->position.x()),
-                millimeter_t(this->position.y()), this->heading);
+ChassisState DeadReckoning::get_state() {
+  return {meter_t(this->position.x()), meter_t(this->position.y()),
+          radian_t(this->heading), this->velocity};
 }
 
-} // namespace vilot
+} // namespace vilot::localisation
 
 namespace vilot::device {
 
-OdometryOld::OdometryOld(uint8_t imu, int8_t parallel,
-                         millimeter_t centre_displacement,
-                         millimeter_t wheel_circumference,
-                         std::optional<int8_t> perpendicular,
-                         std::optional<millimeter_t> middle_distance)
+Odometry::Odometry(uint8_t imu, int8_t parallel,
+                   millimeter_t centre_displacement,
+                   millimeter_t wheel_circumference,
+                   std::optional<int8_t> perpendicular,
+                   std::optional<millimeter_t> middle_distance)
     : imu(imu), parallel(parallel), perpendicular(perpendicular),
       dead_reckoning(centre_displacement,
                      middle_distance.value_or(millimeter_t(0)),
@@ -79,11 +76,11 @@ OdometryOld::OdometryOld(uint8_t imu, int8_t parallel,
   this->task = pros::Task([this]() { this->update(); });
 }
 
-Pose2d OdometryOld::get_pose() {
-  return this->dead_reckoning.lock()->get_pose();
+localisation::ChassisState Odometry::get_state() {
+  return this->dead_reckoning.lock()->get_state();
 }
 
-void OdometryOld::start() {
+void Odometry::start() {
   this->imu.start();
   this->parallel.start();
   if (perpendicular.has_value()) {
@@ -93,7 +90,7 @@ void OdometryOld::start() {
   this->task.notify();
 }
 
-void OdometryOld::update() {
+void Odometry::update() {
   this->task.notify_take(true, TIMEOUT_MAX);
   auto start = pros::millis();
   for (;;) {
@@ -101,7 +98,8 @@ void OdometryOld::update() {
     degree_t parallel_pos = parallel.get_position();
     degree_t perpendicular_pos =
         perpendicular.has_value() ? perpendicular->get_position() : degree_t(0);
-    this->dead_reckoning.lock()->update(yaw, parallel_pos, perpendicular_pos);
+    this->dead_reckoning.lock()->update(yaw, parallel_pos, perpendicular_pos,
+                                        units::time::millisecond_t(10));
     pros::Task::delay_until(&start, 10);
   }
 }
