@@ -1,4 +1,5 @@
 #include "main.h"
+#include "voyage/cubicspline.hpp"
 #include <print>
 
 /**
@@ -28,6 +29,30 @@ void initialize() {
   pros::lcd::set_text(1, "Hello PROS User!");
 
   pros::lcd::register_btn1_cb(on_center_button);
+
+  constexpr voyage::vector<5> x = {{0, 1, 2, 3, 4}};
+  constexpr voyage::vector<5> y = {{1.7, -6, 5, 6.5, 0.0}};
+
+  constexpr voyage::vector<7> x2 = {{-2.5, 0.0, 2.5, 5.0, 7.5, 3.0, -1.0}};
+  constexpr voyage::vector<7> y2 = {{0.7, -6, 5, 6.5, 0.0, 5.0, -2.0}};
+
+  constexpr voyage::CubicSpline1d spline(x, y);
+  constexpr voyage::CubicSpline2d spline2d(x2, y2);
+
+  constexpr int size = spline2d.course_size_from_step(0.1);
+  constexpr auto a = spline2d.calc_course<size>();
+
+  static_assert(a.value().first.size == size);
+  static_assert(a.value().second.size == size);
+
+  for (std::size_t i = 0; i < size; i++) {
+    auto [xs, xy] = a.value();
+    printf("%.6f, %.6f\n", xs[i], xy[i]);
+  }
+
+  constexpr auto final = spline(3.5);
+
+  static_assert(final.value() >= 3.5 && final.value() < 4);
 }
 
 /**
