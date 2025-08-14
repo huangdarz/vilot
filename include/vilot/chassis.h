@@ -88,7 +88,7 @@ public:
 
   template <typename... Args>
   Differential(meter_t track_width, meter_t wheel_radius,
-               DifferentialController controller, device::Odometry *odometry,
+               DifferentialController controller, device::OdometryOld *odometry,
                float decay, Args &&...chassis_args)
       : track_width(track_width), wheel_radius(wheel_radius),
         controller(controller), chassis(std::forward<Args>(chassis_args)...),
@@ -110,7 +110,7 @@ public:
   meter_t track_width;
   meter_t wheel_radius;
   DifferentialController controller;
-  device::Odometry *odometry;
+  device::OdometryOld *odometry;
   ExpDecayFilter decay_filter;
 
 private:
