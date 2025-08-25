@@ -1,14 +1,12 @@
-#include "vilot/drivetrain.h"
+#include "vilot/drivetrain.hpp"
 
 namespace vilot::drivetrain {
 
 using namespace units::angular_velocity;
 
-void Differential::move(meters_per_second_t x, meters_per_second_t y,
-                        radians_per_second_t theta) {
-
-  float left_vel = x() + (y() * this->track_width());
-  float right_vel = x() - (y() * this->track_width());
+void Differential::move(meters_per_second_t x, radians_per_second_t theta) {
+  float left_vel = x() + (theta() * this->track_width() / 2.0f);
+  float right_vel = x() - (theta() * this->track_width() / 2.0f);
 
   revolutions_per_minute_t left_rot = revolutions_per_minute_t(
       units::convert<radians_per_second, revolutions_per_minute>(

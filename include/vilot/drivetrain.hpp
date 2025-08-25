@@ -30,15 +30,9 @@ struct Differential {
 
 namespace vilot::drivetrain {
 
-struct BaseDrivetrain {
+class Differential {
   using meters_per_second_t = units::velocity::meters_per_second_t;
   using radians_per_second_t = units::angular_velocity::radians_per_second_t;
-
-  virtual void move(meters_per_second_t x, meters_per_second_t y,
-                    radians_per_second_t theta) = 0;
-};
-
-class Differential : public BaseDrivetrain {
   using meter_t = units::length::meter_t;
   using radian_t = units::angle::radian_t;
 
@@ -49,8 +43,7 @@ public:
       : track_width(track_width), wheel_radius(wheel_radius),
         chassis(std::forward<Args>(chassis_args)...) {}
 
-  void move(meters_per_second_t x, meters_per_second_t y,
-            radians_per_second_t theta) override;
+  void move(meters_per_second_t x, radians_per_second_t theta);
 
 private:
   chassis::Differential chassis;
