@@ -1,4 +1,5 @@
 #include "vilot/localisation.hpp"
+#include "pros/rtos.h"
 #include "units.h"
 
 namespace vilot::localisation {
@@ -73,7 +74,7 @@ Odometry::Odometry(uint8_t imu, int8_t parallel,
                      middle_distance.value_or(millimeter_t(0)),
                      wheel_circumference),
       task(pros::Task::current()) {
-  this->task = pros::Task([this]() { this->update(); });
+  this->task = pros::Task([this]() { this->update(); }, TASK_PRIORITY_MAX - 1);
 }
 
 localisation::ChassisState Odometry::get_state() {

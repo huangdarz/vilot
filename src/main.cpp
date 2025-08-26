@@ -3,10 +3,17 @@
 #include "pros/imu.hpp"
 #include "pros/rtos.hpp"
 #include "vilot/inertial.h"
+#include "vilot/localisation.hpp"
+#include "vilot/units.h"
 #include "voyage/cubicspline.hpp"
+#include <optional>
 #include <string>
 
-vilot::device::Imu imu(7);
+using namespace units::literals;
+
+// vilot::device::Imu imu(7);
+vilot::device::Odometry odom(7, 4, 16.5_cm, 139.5_mm, std::nullopt,
+                             std::nullopt);
 
 /**
  * Runs initialization code. This occurs as soon as the program is started.
@@ -41,6 +48,8 @@ void initialize() {
   constexpr auto final = spline(3.5);
 
   static_assert(final.value() >= 3.5 && final.value() < 4);
+
+  // imu.start();
 }
 
 /**
@@ -88,15 +97,23 @@ void autonomous() {}
  * task, not resume it from where it left off.
  */
 void opcontrol() {
-  imu.start();
+  odom.start();
   auto time = pros::millis();
   while (true) {
-    pros::lcd::set_text(1, "Yaw: " + std::to_string(imu.get_heading().value()));
-    pros::lcd::set_text(2, "Roll: " + std::to_string(imu.get_roll().value()));
-    pros::lcd::set_text(3, "Pitch: " + std::to_string(imu.get_pitch().value()));
-    pros::lcd::set_text(4, "Yaw: " + std::to_string(imu.get_heading().value()));
-    pros::lcd::set_text(5, "Roll: " + std::to_string(imu.get_roll().value()));
-    pros::lcd::set_text(6, "Pitch: " + std::to_string(imu.get_pitch().value()));
+    pros::lcd::set_text(
+        1,
+        "Heading:" + std::to_string(odom.get_state()
+                                        .theta.convert<units::angle::degree>()
+                                        .value()));
+    pros::lcd::set_text(2, "X: " + std::to_string(odom.get_state().x.value()));
+    // pros::lcd::set_text(1, "Yaw: " +
+    // std::to_string(imu.get_heading().value())); pros::lcd::set_text(2, "Roll:
+    // " + std::to_string(imu.get_roll().value())); pros::lcd::set_text(3,
+    // "Pitch: " + std::to_string(imu.get_pitch().value()));
+    // pros::lcd::set_text(4, "Yaw: " +
+    // std::to_string(imu.get_heading().value())); pros::lcd::set_text(5, "Roll:
+    // " + std::to_string(imu.get_roll().value())); pros::lcd::set_text(6,
+    // "Pitch: " + std::to_string(imu.get_pitch().value()));
     pros::Task::delay_until(&time, 50);
   }
 }
