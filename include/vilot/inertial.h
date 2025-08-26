@@ -171,10 +171,10 @@ private:
   const float beta;        ///< Filter gain parameter
 
   // Quaternion components (w, x, y, z)
-  float q1 = 1.0; ///< Quaternion w component (scalar part)
-  float q2;       ///< Quaternion x component
-  float q3;       ///< Quaternion y component
-  float q4;       ///< Quaternion z component
+  float q1 = 1; // 0.7071068; // 1 ///< Quaternion w component (scalar part)
+  float q2;     // 0.7071068; ///< Quaternion x component
+  float q3;     ///< Quaternion y component
+  float q4;     ///< Quaternion z component
 
   // Angle offsets for taring functionality
   radian_t roll_offset;  ///< Roll angle offset from taring
@@ -371,6 +371,10 @@ public:
    *       last tare/reset operation.
    */
   degree_t get_heading() const;
+
+  degree_t get_yaw() const;
+  degree_t get_pitch() const;
+  degree_t get_roll() const;
 
   /**
    * @brief Get the port number of the IMU sensor

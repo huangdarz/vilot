@@ -2,6 +2,7 @@
 #include "etl/circular_buffer.h"
 #include "pros/rtos.h"
 #include "pros/rtos.hpp"
+#include <cstdio>
 
 namespace vilot {
 
@@ -122,7 +123,7 @@ const radian_t Madgwick::roll() const noexcept {
 const radian_t Madgwick::pitch() const noexcept {
   const float val = 2 * q2 * q4 + 2 * q1 * q3;
   const radian_t offset = this->pitch_offset;
-  const float rad = -asinhf(val);
+  const float rad = -asinf(val);
   const radian_t curr_pitch = radian_t(rad);
   const radian_t result = offset_angle(curr_pitch, offset);
   return result;
@@ -172,7 +173,8 @@ namespace vilot::device {
 Imu::Imu(const uint8_t port, const float beta)
     : task(pros::Task::current()), inertial(port), filter(100.0_Hz, beta),
       is_calibrating(true) {
-  this->task = pros::Task([this]() { this->update(); });
+  this->task = pros::Task([this]() { this->update(); }, TASK_PRIORITY_MAX,
+                          TASK_STACK_DEPTH_MIN);
 }
 
 void Imu::reset(const radian_t yaw, const radian_t pitch, const radian_t roll) {
@@ -185,16 +187,17 @@ void Imu::start() {
   using namespace units::math;
 
   this->inertial.reset(true);
+  pros::Task::delay(3000);
   this->task.notify();
 
   etl::circular_buffer<radian_t, 100> window;
 
   while (window.available()) {
+    pros::Task::delay(10);
     mut.lock();
     radian_t yaw = this->filter.yaw();
     mut.unlock();
     window.push(yaw);
-    pros::Task::delay(10);
   }
 
   auto pct_diff = [&window]() {
@@ -220,6 +223,27 @@ void Imu::start() {
 degree_t Imu::get_heading() const {
   mut.lock();
   auto ret = this->filter.yaw();
+  mut.unlock();
+  return ret;
+}
+
+degree_t Imu::get_yaw() const {
+  mut.lock();
+  auto ret = this->filter.yaw();
+  mut.unlock();
+  return ret;
+}
+
+degree_t Imu::get_pitch() const {
+  mut.lock();
+  auto ret = this->filter.pitch();
+  mut.unlock();
+  return ret;
+}
+
+degree_t Imu::get_roll() const {
+  mut.lock();
+  auto ret = this->filter.roll();
   mut.unlock();
   return ret;
 }
