@@ -1,19 +1,30 @@
 #include "main.h"
 #include "liblvgl/llemu.hpp"
+#include "pros/abstract_motor.hpp"
 #include "pros/imu.hpp"
+#include "pros/misc.h"
 #include "pros/rtos.hpp"
+#include "vilot/drivetrain.hpp"
 #include "vilot/inertial.h"
 #include "vilot/localisation.hpp"
+#include "vilot/ramsete.hpp"
 #include "vilot/units.h"
 #include "voyage/cubicspline.hpp"
+#include "voyage/motionprofile.hpp"
+#include <initializer_list>
 #include <optional>
 #include <string>
 
 using namespace units::literals;
 
 // vilot::device::Imu imu(7);
-vilot::device::Odometry odom(7, 4, 16.5_cm, 139.5_mm, std::nullopt,
+vilot::device::Odometry odom(7, 4, 16.5_cm, 131.9_mm, std::nullopt,
                              std::nullopt);
+
+auto bot = vilot::drivetrain::Differential(
+    12.668_in, 1.5_in, std::initializer_list<signed char>{11, -12, 13, 14},
+    std::initializer_list<signed char>{-16, 17, -18, -19}, 0.8,
+    pros::v5::MotorGears::blue);
 
 /**
  * Runs initialization code. This occurs as soon as the program is started.
@@ -50,70 +61,64 @@ void initialize() {
   static_assert(final.value() >= 3.5 && final.value() < 4);
 
   // imu.start();
+  odom.start();
+  pros::Task([=]() {
+    while (true) {
+      printf("Heading: %f | X: %f\n",
+             odom.get_state().theta.convert<units::angle::degree>().value(),
+             odom.get_state().x.value());
+      pros::Task::delay(500);
+    }
+  });
 }
 
-/**
- * Runs while the robot is in the disabled state of Field Management System or
- * the VEX Competition Switch, following either autonomous or opcontrol. When
- * the robot is enabled, this task will exit.
- */
 void disabled() {}
 
-/**
- * Runs after initialize(), and before autonomous when connected to the Field
- * Management System or the VEX Competition Switch. This is intended for
- * competition-specific initialization routines, such as an autonomous selector
- * on the LCD.
- *
- * This task will exit when the robot is enabled and autonomous or opcontrol
- * starts.
- */
 void competition_initialize() {}
 
-/**
- * Runs the user autonomous code. This function will be started in its own task
- * with the default priority and stack size whenever the robot is enabled via
- * the Field Management System or the VEX Competition Switch in the autonomous
- * mode. Alternatively, this function may be called in initialize or opcontrol
- * for non-competition testing purposes.
- *
- * If the robot is disabled or communications is lost, the autonomous task
- * will be stopped. Re-enabling the robot will restart the task, not re-start it
- * from where it left off.
- */
-void autonomous() {}
+void autonomous() {
+  auto state = odom.get_state();
+  const auto start_state = state;
+  auto tmp = voyage::TrapezoidalMotionProfile(3, 1.92, 1.2, 0.9);
+  auto rc = vilot::RamseteController(0.5, 0.05);
 
-/**
- * Runs the operator control code. This function will be started in its own task
- * with the default priority and stack size whenever the robot is enabled via
- * the Field Management System or the VEX Competition Switch in the operator
- * control mode.
- *
- * If no competition control is connected, this function will run immediately
- * following initialize().
- *
- * If the robot is disabled or communications is lost, the
- * operator control task will be stopped. Re-enabling the robot will restart the
- * task, not resume it from where it left off.
- */
+  auto total_ms = tmp.motion_total_time() * 1000;
+  auto step_size_period = 10.f; // 10 ms
+  auto iterations = total_ms / step_size_period;
+
+  for (int i = 0; i < iterations; i++) {
+    auto t = static_cast<float>(i) * tmp.motion_total_time() / (iterations - 1);
+    auto pp = tmp.sample(t);
+    auto [lin, ang] = rc.calculate(
+        {state.x(), state.y(), state.theta()},
+        {start_state.x() + pp.position, start_state.y(), 0}, pp.velocity, 0);
+    bot.move(units::velocity::meters_per_second_t(lin),
+             units::angular_velocity::radians_per_second_t(ang));
+    state = odom.get_state();
+    pros::Task::delay(10);
+  }
+  bot.stop();
+}
+
 void opcontrol() {
-  odom.start();
+  pros::Controller master(pros::E_CONTROLLER_MASTER);
+
   auto time = pros::millis();
   while (true) {
-    pros::lcd::set_text(
-        1,
-        "Heading:" + std::to_string(odom.get_state()
-                                        .theta.convert<units::angle::degree>()
-                                        .value()));
-    pros::lcd::set_text(2, "X: " + std::to_string(odom.get_state().x.value()));
-    // pros::lcd::set_text(1, "Yaw: " +
-    // std::to_string(imu.get_heading().value())); pros::lcd::set_text(2, "Roll:
-    // " + std::to_string(imu.get_roll().value())); pros::lcd::set_text(3,
-    // "Pitch: " + std::to_string(imu.get_pitch().value()));
-    // pros::lcd::set_text(4, "Yaw: " +
-    // std::to_string(imu.get_heading().value())); pros::lcd::set_text(5, "Roll:
-    // " + std::to_string(imu.get_roll().value())); pros::lcd::set_text(6,
-    // "Pitch: " + std::to_string(imu.get_pitch().value()));
-    pros::Task::delay_until(&time, 50);
+    // pros::lcd::set_text(
+    //     1,
+    //     "Heading:" + std::to_string(odom.get_state()
+    //                                     .theta.convert<units::angle::degree>()
+    //                                     .value()));
+    // pros::lcd::set_text(2, "X: " +
+    // std::to_string(odom.get_state().x.value()));
+
+    auto left_y = static_cast<float>(master.get_analog(ANALOG_LEFT_Y)) / 127.f;
+    auto right_y =
+        static_cast<float>(master.get_analog(ANALOG_RIGHT_Y)) / 127.f;
+    bot.move(units::voltage::millivolt_t(left_y * 12000),
+             units::voltage::millivolt_t(right_y * 12000));
+
+    pros::Task::delay_until(&time, 25);
   }
 }
