@@ -46,7 +46,7 @@ public:
     this->total_time = accel_time + cruise_time + decel_time;
   }
 
-  constexpr ProfilePoint sample(float t) noexcept {
+  constexpr ProfilePoint sample(float t) const noexcept {
     ProfilePoint point;
     point.t = t;
 
@@ -89,7 +89,9 @@ public:
     return point;
   }
 
-  constexpr float motion_total_time() noexcept { return this->total_time; }
+  constexpr float motion_total_time() const noexcept {
+    return this->total_time;
+  }
 
 private:
   float target;
