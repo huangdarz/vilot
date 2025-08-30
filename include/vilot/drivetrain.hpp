@@ -35,6 +35,7 @@ class Differential {
   using radians_per_second_t = units::angular_velocity::radians_per_second_t;
   using meter_t = units::length::meter_t;
   using radian_t = units::angle::radian_t;
+  using millivolt_t = units::voltage::millivolt_t;
 
 public:
   template <typename... Args>
@@ -44,6 +45,9 @@ public:
         chassis(std::forward<Args>(chassis_args)...) {}
 
   void move(meters_per_second_t x, radians_per_second_t theta);
+  void move(millivolt_t left, millivolt_t right);
+
+  void stop();
 
 private:
   chassis::Differential chassis;

@@ -1,24 +1,42 @@
 #include "vilot/drivetrain.hpp"
+#include <numbers>
 
 namespace vilot::drivetrain {
 
 using namespace units::angular_velocity;
 
-void Differential::move(meters_per_second_t x, radians_per_second_t theta) {
-  float left_vel = x() + (theta() * this->track_width() / 2.0f);
-  float right_vel = x() - (theta() * this->track_width() / 2.0f);
+// #define RPS_TO_RPM 9.5492
 
-  revolutions_per_minute_t left_rot = revolutions_per_minute_t(
-      units::convert<radians_per_second, revolutions_per_minute>(
-          left_vel / this->wheel_radius()));
-  revolutions_per_minute_t right_rot = revolutions_per_minute_t(
-      units::convert<radians_per_second, revolutions_per_minute>(
-          right_vel / this->wheel_radius()));
+void Differential::move(meters_per_second_t x, radians_per_second_t theta) {
+  float left_vel = x() / (this->wheel_radius() * 2 * std::numbers::pi) +
+                   (theta() * this->track_width() / 2.0f);
+  float right_vel = x() / (this->wheel_radius() * 2 * std::numbers::pi) -
+                    (theta() * this->track_width() / 2.0f);
+
+  revolutions_per_minute_t left_rot = radians_per_second_t(left_vel);
+  revolutions_per_minute_t right_rot = radians_per_second_t(right_vel);
+
+  // revolutions_per_minute_t left_rot = revolutions_per_minute_t(
+  //     units::convert<radians_per_second, revolutions_per_minute>(left_vel *
+  //                                                                RPS_TO_RPM));
+  // revolutions_per_minute_t right_rot = revolutions_per_minute_t(
+  //     units::convert<radians_per_second, revolutions_per_minute>(right_vel *
+  //                                                                RPS_TO_RPM));
 
   this->chassis.left.move_velocity(left_rot() *
                                    this->chassis.gear_ratio_in_out);
   this->chassis.right.move_velocity(right_rot() *
                                     this->chassis.gear_ratio_in_out);
+}
+
+void Differential::move(millivolt_t left, millivolt_t right) {
+  this->chassis.left.move(left());
+  this->chassis.right.move(right());
+}
+
+void Differential::stop() {
+  this->chassis.left.brake();
+  this->chassis.right.brake();
 }
 
 } // namespace vilot::drivetrain
