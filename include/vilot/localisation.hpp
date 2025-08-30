@@ -22,15 +22,6 @@ struct ChassisState {
   meters_per_second_t vx;
 };
 
-template <typename T>
-concept Localiser = requires(T t) {
-  { t.get_state() } -> std::same_as<ChassisState>;
-};
-
-struct BaseLocalisation {
-  virtual ChassisState get_state() = 0;
-};
-
 class DeadReckoning {
   using degree_t = units::angle::degree_t;
   using radian_t = units::angle::radian_t;
@@ -66,7 +57,7 @@ private:
 
 namespace vilot::device {
 
-class Odometry : public localisation::BaseLocalisation {
+class Odometry {
   using millimeter_t = units::length::millimeter_t;
   using degree_t = units::angle::degree_t;
   using radian_t = units::angle::radian_t;
@@ -74,12 +65,12 @@ class Odometry : public localisation::BaseLocalisation {
 public:
   Odometry(uint8_t imu, int8_t parallel, millimeter_t centre_displacement,
            millimeter_t wheel_circumference,
-           std::optional<int8_t> perpendicular,
-           std::optional<millimeter_t> middle_distance);
+           std::optional<int8_t> perpendicular = std::nullopt,
+           std::optional<millimeter_t> middle_distance = std::nullopt);
 
   void start();
 
-  localisation::ChassisState get_state() override;
+  localisation::ChassisState get_state();
 
 private:
   void update();
