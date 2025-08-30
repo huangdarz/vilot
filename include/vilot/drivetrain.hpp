@@ -2,6 +2,7 @@
 
 #include "pros/motor_group.hpp"
 #include "units.h"
+#include "vilot/localisation.hpp"
 
 namespace vilot {
 
@@ -10,7 +11,6 @@ namespace vilot {
 #define MOTORS(...)                                                            \
   std::initializer_list<int8_t> { __VA_ARGS__ }
 
-namespace {
 struct DifferentialChassis {
   using meter_t = units::length::meter_t;
   using millivolt_t = units::voltage::millivolt_t;
@@ -31,10 +31,11 @@ struct DifferentialChassis {
   pros::MotorGroup right;
   float gear_ratio_in_out;
 };
-} // namespace
 
 class DifferentialDrivetrain {
   using meters_per_second_t = units::velocity::meters_per_second_t;
+  using meters_per_second_squared_t =
+      units::acceleration::meters_per_second_squared_t;
   using radians_per_second_t = units::angular_velocity::radians_per_second_t;
   using meter_t = units::length::meter_t;
   using radian_t = units::angle::radian_t;
@@ -43,12 +44,17 @@ class DifferentialDrivetrain {
 public:
   template <typename... Args>
   DifferentialDrivetrain(meter_t track_width, meter_t wheel_radius,
-                         Args &&...chassis_args)
+                         device::Odometry &odometry, Args &&...chassis_args)
       : track_width(track_width), wheel_radius(wheel_radius),
-        chassis(std::forward<Args>(chassis_args)...) {}
+        chassis(std::forward<Args>(chassis_args)...), odometry(odometry) {}
 
   void move(meters_per_second_t x, radians_per_second_t theta);
   void move(millivolt_t forward, millivolt_t turn);
+
+  void follow(meter_t distance, meters_per_second_t max_velocity,
+              meters_per_second_squared_t acceleration,
+              meters_per_second_squared_t deceleration,
+              float follow_strength = 0.5, float follow_dampen = 0.05);
 
   void tank(millivolt_t left, millivolt_t right);
 
@@ -58,6 +64,7 @@ private:
   DifferentialChassis chassis;
   meter_t track_width;
   meter_t wheel_radius;
+  device::Odometry &odometry;
 };
 
 } // namespace vilot

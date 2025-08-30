@@ -1,9 +1,12 @@
 #include "vilot/drivetrain.hpp"
+#include "ramsete.hpp"
+#include "voyage/motionprofile.hpp"
 #include <algorithm>
 #include <numbers>
 
 namespace vilot {
 
+using namespace units::literals;
 using namespace units::angular_velocity;
 
 // #define RPS_TO_RPM 9.5492
@@ -33,6 +36,38 @@ void DifferentialDrivetrain::move(meters_per_second_t x,
 
 void DifferentialDrivetrain::move(millivolt_t forward, millivolt_t turn) {
   this->tank(forward + turn, forward - turn);
+}
+
+void DifferentialDrivetrain::follow(meter_t distance,
+                                    meters_per_second_t max_velocity,
+                                    meters_per_second_squared_t acceleration,
+                                    meters_per_second_squared_t deceleration,
+                                    float follow_strength,
+                                    float follow_dampen) {
+  auto state = this->odometry.get_state();
+  const auto start_state = state;
+  auto motion = voyage::TrapezoidalMotionProfile<units::length::meter>(
+      distance, max_velocity, acceleration, deceleration);
+  auto controller = vilot::RamseteController(follow_strength, follow_dampen);
+
+  units::time::millisecond_t total_ms = motion.motion_total_time();
+  units::time::millisecond_t step_size_period = 10_ms;
+  int iterations = total_ms / step_size_period;
+
+  for (int i = 0; i < iterations; i++) {
+    auto t =
+        static_cast<float>(i) * motion.motion_total_time() / (iterations - 1);
+    auto pp = motion.sample(units::time::millisecond_t(t));
+    auto [lin, ang] = controller.calculate(
+        {state.x, state.y, state.theta},
+        {start_state.x + pp.position, start_state.y, start_state.theta},
+        pp.velocity, 0_rps);
+    this->move(units::velocity::meters_per_second_t(lin),
+               units::angular_velocity::radians_per_second_t(ang));
+    state = this->odometry.get_state();
+    pros::Task::delay(10);
+  }
+  this->stop();
 }
 
 void DifferentialDrivetrain::tank(millivolt_t left, millivolt_t right) {

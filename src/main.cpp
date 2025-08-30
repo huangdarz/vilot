@@ -18,12 +18,11 @@
 using namespace units::literals;
 
 // vilot::device::Imu imu(7);
-vilot::device::Odometry odom(7, 4, 16.5_cm, 131.9_mm, std::nullopt,
-                             std::nullopt);
+vilot::device::Odometry odom(7, 4, 16.5_cm, 131.9_mm);
 
 auto bot = vilot::DifferentialDrivetrain(
-    12.668_in, 1.5_in, MOTORS(11, -12, 13, 14), MOTORS(-16, 17, -18, -19), 0.8,
-    pros::v5::MotorGears::blue);
+    12.668_in, 1.5_in, odom, MOTORS(11, -12, 13, 14), MOTORS(-16, 17, -18, -19),
+    0.8, pros::v5::MotorGears::blue);
 
 /**
  * Runs initialization code. This occurs as soon as the program is started.
@@ -76,29 +75,7 @@ void disabled() {}
 void competition_initialize() {}
 
 void autonomous() {
-  auto state = odom.get_state();
-  const auto start_state = state;
-  auto tmp = voyage::TrapezoidalMotionProfile<units::length::meter>(
-      3_m, 1.92_mps, 1.2_mps_sq, 0.9_mps_sq);
-  auto rc = vilot::RamseteController(0.5, 0.05);
-
-  units::time::millisecond_t total_ms = tmp.motion_total_time();
-  units::time::millisecond_t step_size_period = 10_ms;
-  int iterations = total_ms / step_size_period;
-
-  for (int i = 0; i < iterations; i++) {
-    auto t = static_cast<float>(i) * tmp.motion_total_time() / (iterations - 1);
-    auto pp = tmp.sample(units::time::millisecond_t(t));
-    auto [lin, ang] =
-        rc.calculate({state.x, state.y, state.theta},
-                     {start_state.x + pp.position, start_state.y, 0_rad},
-                     pp.velocity, 0_rps);
-    bot.move(units::velocity::meters_per_second_t(lin),
-             units::angular_velocity::radians_per_second_t(ang));
-    state = odom.get_state();
-    pros::Task::delay(10);
-  }
-  bot.stop();
+  bot.follow(3_m, 1.92_mps, 1.2_mps_sq, 0.9_mps_sq, 0.5, 0.05);
 }
 
 void opcontrol() {
