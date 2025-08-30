@@ -21,9 +21,8 @@ using namespace units::literals;
 vilot::device::Odometry odom(7, 4, 16.5_cm, 131.9_mm, std::nullopt,
                              std::nullopt);
 
-auto bot = vilot::drivetrain::Differential(
-    12.668_in, 1.5_in, std::initializer_list<signed char>{11, -12, 13, 14},
-    std::initializer_list<signed char>{-16, 17, -18, -19}, 0.8,
+auto bot = vilot::DifferentialDrivetrain(
+    12.668_in, 1.5_in, MOTORS(11, -12, 13, 14), MOTORS(-16, 17, -18, -19), 0.8,
     pros::v5::MotorGears::blue);
 
 /**

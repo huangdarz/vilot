@@ -3,20 +3,26 @@
 #include "pros/motor_group.hpp"
 #include "units.h"
 
-namespace vilot::chassis {
+namespace vilot {
 
-struct Differential {
+#define MAX_VOLTAGE_MV 12000.f
+
+#define MOTORS(...)                                                            \
+  std::initializer_list<int8_t> { __VA_ARGS__ }
+
+namespace {
+struct DifferentialChassis {
   using meter_t = units::length::meter_t;
   using millivolt_t = units::voltage::millivolt_t;
   using revolutions_per_minute_t =
       units::angular_velocity::revolutions_per_minute_t;
 
-  Differential() = delete;
+  DifferentialChassis() = delete;
 
   template <typename... Args>
-  Differential(const std::initializer_list<int8_t> left_motors,
-               const std::initializer_list<int8_t> right_motors,
-               const float gear_ratio_in_out, Args &&...shared_args)
+  DifferentialChassis(const std::initializer_list<int8_t> left_motors,
+                      const std::initializer_list<int8_t> right_motors,
+                      const float gear_ratio_in_out, Args &&...shared_args)
       : left(left_motors, std::forward<Args>(shared_args)...),
         right(right_motors, std::forward<Args>(shared_args)...),
         gear_ratio_in_out(gear_ratio_in_out) {}
@@ -25,12 +31,9 @@ struct Differential {
   pros::MotorGroup right;
   float gear_ratio_in_out;
 };
+} // namespace
 
-} // namespace vilot::chassis
-
-namespace vilot::drivetrain {
-
-class Differential {
+class DifferentialDrivetrain {
   using meters_per_second_t = units::velocity::meters_per_second_t;
   using radians_per_second_t = units::angular_velocity::radians_per_second_t;
   using meter_t = units::length::meter_t;
@@ -39,20 +42,22 @@ class Differential {
 
 public:
   template <typename... Args>
-  Differential(meter_t track_width, meter_t wheel_radius,
-               Args &&...chassis_args)
+  DifferentialDrivetrain(meter_t track_width, meter_t wheel_radius,
+                         Args &&...chassis_args)
       : track_width(track_width), wheel_radius(wheel_radius),
         chassis(std::forward<Args>(chassis_args)...) {}
 
   void move(meters_per_second_t x, radians_per_second_t theta);
-  void move(millivolt_t left, millivolt_t right);
+  void move(millivolt_t forward, millivolt_t turn);
+
+  void tank(millivolt_t left, millivolt_t right);
 
   void stop();
 
 private:
-  chassis::Differential chassis;
+  DifferentialChassis chassis;
   meter_t track_width;
   meter_t wheel_radius;
 };
 
-} // namespace vilot::drivetrain
+} // namespace vilot
