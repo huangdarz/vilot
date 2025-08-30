@@ -91,9 +91,9 @@ void autonomous() {
     auto t = static_cast<float>(i) * tmp.motion_total_time() / (iterations - 1);
     auto pp = tmp.sample(units::time::millisecond_t(t));
     auto [lin, ang] =
-        rc.calculate({state.x(), state.y(), state.theta()},
-                     {start_state.x() + pp.position(), start_state.y(), 0},
-                     pp.velocity(), 0);
+        rc.calculate({state.x, state.y, state.theta},
+                     {start_state.x + pp.position, start_state.y, 0_rad},
+                     pp.velocity, 0_rps);
     bot.move(units::velocity::meters_per_second_t(lin),
              units::angular_velocity::radians_per_second_t(ang));
     state = odom.get_state();
