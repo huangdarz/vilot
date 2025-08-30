@@ -25,7 +25,7 @@ public:
         desired_linear_velocity * std::cosf(local_error.z()) +
         k * local_error.x();
     float out_angular_velocity =
-        desired_angular_velocity + k + local_error.z() +
+        desired_angular_velocity + k * local_error.z() +
         (this->b * desired_linear_velocity * std::sinf(local_error.z()) *
          local_error.y()) /
             local_error.z();
