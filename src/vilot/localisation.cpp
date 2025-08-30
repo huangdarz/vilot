@@ -56,8 +56,9 @@ void DeadReckoning::update(radian_t yaw, degree_t parallel,
 }
 
 ChassisState DeadReckoning::get_state() {
-  return {meter_t(this->position.x()), meter_t(this->position.y()),
-          radian_t(this->heading), this->velocity};
+  return {{meter_t(this->position.x()), meter_t(this->position.y()),
+           radian_t(this->heading)},
+          this->velocity};
 }
 
 } // namespace vilot::localisation

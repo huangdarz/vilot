@@ -4,22 +4,16 @@
 #include "units.h"
 #include "vilot/inertial.h"
 #include "vilot/rotation.h"
-#include <concepts>
+#include "vilot/util.h"
 
 namespace vilot::localisation {
 
 struct ChassisState {
-  using meter_t = units::length::meter_t;
-  using radian_t = units::angle::radian_t;
-  using meters_per_second_t = units::velocity::meters_per_second_t;
-
   // Global frame
-  meter_t x;
-  meter_t y;
-  radian_t theta;
+  Pose2d pose;
 
   // Local frame
-  meters_per_second_t vx;
+  units::velocity::meters_per_second_t vx;
 };
 
 class DeadReckoning {

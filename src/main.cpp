@@ -1,18 +1,11 @@
 #include "main.h"
 #include "liblvgl/llemu.hpp"
 #include "pros/abstract_motor.hpp"
-#include "pros/imu.hpp"
 #include "pros/misc.h"
 #include "pros/rtos.hpp"
 #include "units.h"
 #include "vilot/drivetrain.hpp"
-#include "vilot/inertial.h"
 #include "vilot/localisation.hpp"
-#include "vilot/ramsete.hpp"
-#include "voyage/cubicspline.hpp"
-#include "voyage/motionprofile.hpp"
-#include <initializer_list>
-#include <optional>
 #include <string>
 
 using namespace units::literals;
@@ -34,37 +27,14 @@ void initialize() {
   pros::lcd::initialize();
   pros::lcd::set_text(1, "Hello PROS User!");
 
-  constexpr voyage::vector<5> x = {{0, 1, 2, 3, 4}};
-  constexpr voyage::vector<5> y = {{1.7, -6, 5, 6.5, 0.0}};
-
-  constexpr voyage::vector<7> x2 = {{-2.5, 0.0, 2.5, 5.0, 7.5, 3.0, -1.0}};
-  constexpr voyage::vector<7> y2 = {{0.7, -6, 5, 6.5, 0.0, 5.0, -2.0}};
-
-  constexpr voyage::CubicSpline1d spline(x, y);
-  constexpr voyage::CubicSpline2d spline2d(x2, y2);
-
-  constexpr int size = spline2d.course_size_from_step(0.1);
-  constexpr auto a = spline2d.calc_course<size>();
-
-  static_assert(a.value().first.size == size);
-  static_assert(a.value().second.size == size);
-
-  for (std::size_t i = 0; i < size; i++) {
-    auto [xs, xy] = a.value();
-    printf("%.6f, %.6f\n", xs[i], xy[i]);
-  }
-
-  constexpr auto final = spline(3.5);
-
-  static_assert(final.value() >= 3.5 && final.value() < 4);
-
   // imu.start();
   odom.start();
   pros::Task([=]() {
     while (true) {
+      auto state = odom.get_state();
       printf("Heading: %f | X: %f\n",
-             odom.get_state().theta.convert<units::angle::degree>().value(),
-             odom.get_state().x.value());
+             state.pose.theta.convert<units::angle::degree>().value(),
+             state.pose.x.value());
       pros::Task::delay(500);
     }
   });
@@ -92,10 +62,10 @@ void opcontrol() {
     // std::to_string(odom.get_state().x.value()));
 
     auto left_y = static_cast<float>(master.get_analog(ANALOG_LEFT_Y)) / 127.f;
-    auto right_y =
-        static_cast<float>(master.get_analog(ANALOG_RIGHT_Y)) / 127.f;
+    auto right_x =
+        static_cast<float>(master.get_analog(ANALOG_RIGHT_X)) / 127.f;
     bot.move(units::voltage::millivolt_t(left_y * 12000),
-             units::voltage::millivolt_t(right_y * 12000));
+             units::voltage::millivolt_t(right_x * 12000));
 
     pros::Task::delay_until(&time, 25);
   }

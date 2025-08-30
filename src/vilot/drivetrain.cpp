@@ -38,6 +38,7 @@ void DifferentialDrivetrain::move(millivolt_t forward, millivolt_t turn) {
   this->tank(forward + turn, forward - turn);
 }
 
+// TODO add reverse
 void DifferentialDrivetrain::follow(meter_t distance,
                                     meters_per_second_t max_velocity,
                                     meters_per_second_squared_t acceleration,
@@ -58,10 +59,11 @@ void DifferentialDrivetrain::follow(meter_t distance,
     auto t =
         static_cast<float>(i) * motion.motion_total_time() / (iterations - 1);
     auto pp = motion.sample(units::time::millisecond_t(t));
-    auto [lin, ang] = controller.calculate(
-        {state.x, state.y, state.theta},
-        {start_state.x + pp.position, start_state.y, start_state.theta},
-        pp.velocity, 0_rps);
+    auto [lin, ang] =
+        controller.calculate(state.pose,
+                             {start_state.pose.x + pp.position,
+                              start_state.pose.y, start_state.pose.theta},
+                             pp.velocity, 0_rps);
     this->move(units::velocity::meters_per_second_t(lin),
                units::angular_velocity::radians_per_second_t(ang));
     state = this->odometry.get_state();

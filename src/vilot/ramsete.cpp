@@ -10,7 +10,8 @@ using radians_per_second_t = units::angular_velocity::radians_per_second_t;
 
 std::tuple<meters_per_second_t, radians_per_second_t>
 RamseteController::calculate(
-    State _actual, State _desired, meters_per_second_t desired_linear_velocity,
+    Pose2d _actual, Pose2d _desired,
+    meters_per_second_t desired_linear_velocity,
     radians_per_second_t desired_angular_velocity) noexcept {
   Eigen::Vector3f actual(_actual.x(), _actual.y(), _actual.theta());
   Eigen::Vector3f desired(_desired.x(), _desired.y(), _desired.theta());

@@ -1,6 +1,7 @@
 #pragma once
 #include "Eigen/Dense"
 #include "units.h"
+#include "vilot/util.h"
 #include <cmath>
 #include <tuple>
 
@@ -16,16 +17,10 @@ class RamseteController {
   using radians_per_second_t = units::angular_velocity::radians_per_second_t;
 
 public:
-  struct State {
-    meter_t x;
-    meter_t y;
-    radian_t theta;
-  };
-
   RamseteController(float b, float zeta) : b(b), zeta(zeta) {}
 
   std::tuple<meters_per_second_t, radians_per_second_t>
-  calculate(State actual, State desired,
+  calculate(Pose2d actual, Pose2d desired,
             meters_per_second_t desired_linear_velocity,
             radians_per_second_t desired_angular_velocity) noexcept;
 
