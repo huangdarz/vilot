@@ -79,8 +79,8 @@ void competition_initialize() {}
 void autonomous() {
   auto state = odom.get_state();
   const auto start_state = state;
-  auto tmp =
-      voyage::TrapezoidalMotionProfile(3_m, 1.92_mps, 1.2_mps_sq, 0.9_mps_sq);
+  auto tmp = voyage::TrapezoidalMotionProfile<units::length::meter>(
+      3_m, 1.92_mps, 1.2_mps_sq, 0.9_mps_sq);
   auto rc = vilot::RamseteController(0.5, 0.05);
 
   units::time::millisecond_t total_ms = tmp.motion_total_time();
