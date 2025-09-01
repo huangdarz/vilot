@@ -225,16 +225,6 @@ public:
       const units::time::second_t sample_time = units::time::millisecond_t(10));
 
   /**
-   * @brief Construct a new Nonlinear PID Controller with raw float sample time
-   *
-   * @param constants Nonlinear PID gains and parameters
-   * @param sample_time Time between controller updates in seconds (default:
-   * 0.01s)
-   */
-  NonlinearPidController(const NonLinearPidConstants constants,
-                         const float sample_time = 0.01);
-
-  /**
    * @brief Calculate the controller output using nonlinear gain scheduling
    *
    * Computes the nonlinear PID control output where proportional and integral

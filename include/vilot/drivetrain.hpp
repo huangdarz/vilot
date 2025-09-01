@@ -3,6 +3,7 @@
 #include "pros/motor_group.hpp"
 #include "units.h"
 #include "vilot/localisation.hpp"
+#include "vilot/pid.h"
 
 namespace vilot {
 
@@ -39,7 +40,9 @@ class DifferentialDrivetrain {
   using radians_per_second_t = units::angular_velocity::radians_per_second_t;
   using meter_t = units::length::meter_t;
   using radian_t = units::angle::radian_t;
+  using degree_t = units::angle::degree_t;
   using millivolt_t = units::voltage::millivolt_t;
+  using millisecond_t = units::time::millisecond_t;
 
 public:
   template <typename... Args>
@@ -55,6 +58,13 @@ public:
               meters_per_second_squared_t acceleration,
               meters_per_second_squared_t deceleration,
               float follow_strength = 0.5, float follow_dampen = 0.05);
+
+  void rotate_to(degree_t target, NonLinearPidConstants constants,
+                 degree_t tolerance,
+                 millisecond_t timeout = millisecond_t(3000));
+  void rotate_for(degree_t amount, NonLinearPidConstants constants,
+                  degree_t tolerance,
+                  millisecond_t timeout = millisecond_t(3000));
 
   void tank(millivolt_t left, millivolt_t right);
 
