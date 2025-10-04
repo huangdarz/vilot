@@ -89,22 +89,18 @@ float ExpDecayFilter::apply(float input, units::time::second_t dt) {
 void ExpDecayFilter::reset() { this->prev = 0; }
 
 float input_modulus_filter(float input, float min_input, float max_input) {
-  float error_bound = (max_input - min_input) / 2.0;
+  float range = max_input - min_input;
 
-  float min_error = -error_bound;
-  float max_error = error_bound;
+  // Normalize input to [0, range)
+  float normalized = std::fmod(input - min_input, range);
 
-  float modulus = max_error - min_error;
+  // Handle negative results from fmod
+  if (normalized < 0) {
+    normalized += range;
+  }
 
-  // Wrap input if it's above the maximum input
-  int numMax = (int)((input - min_error) / modulus);
-  input -= numMax * modulus;
-
-  // Wrap input if it's below the minimum input
-  int numMin = (int)((input - max_error) / modulus);
-  input -= numMin * modulus;
-
-  return input;
+  // Shift back to [min_input, max_input)
+  return normalized + min_input;
 }
 
 InputModulusFilter::InputModulusFilter(float min_input, float max_input)

@@ -154,4 +154,45 @@ float NonlinearPidController::calculate(const float measurement,
   return output;
 }
 
+void NonlinearPidController::reset() {
+  this->integrator = 0.0;
+  this->prev_error = 0.0;
+  this->differentiator = 0.0;
+  this->prev_measurement = 0.0;
+}
+
+float NonlinearPidController::get_abs_max_output() {
+  return this->abs_max_output;
+}
+
+float NonlinearPidController::get_min_input() {
+  return this->input_modulus.get_min_input();
+}
+
+float NonlinearPidController::get_max_input() {
+  return this->input_modulus.get_max_input();
+}
+
+bool NonlinearPidController::get_continuous_input() {
+  return this->is_continuous_input;
+}
+
+void NonlinearPidController::set_abs_max_output(float abs_max_output) {
+  this->abs_max_output = abs_max_output;
+}
+
+void NonlinearPidController::set_min_input(float min_input) {
+  this->input_modulus =
+      InputModulusFilter(min_input, this->input_modulus.get_max_input());
+}
+
+void NonlinearPidController::set_max_input(float max_input) {
+  this->input_modulus =
+      InputModulusFilter(this->input_modulus.get_min_input(), max_input);
+}
+
+void NonlinearPidController::set_continuous_input(bool is_continuous_input) {
+  this->is_continuous_input = is_continuous_input;
+}
+
 } // namespace vilot

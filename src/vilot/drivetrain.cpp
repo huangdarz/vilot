@@ -75,6 +75,26 @@ void DifferentialDrivetrain::follow(meter_t distance,
   this->stop();
 }
 
+void DifferentialDrivetrain::rotate_to(degree_t target, PidConstants constants,
+                                       degree_t tolerance,
+                                       millisecond_t timeout) {
+  PidController controller(constants);
+  controller.set_continuous_input(true);
+  controller.set_max_input(180);
+  controller.set_min_input(-180);
+  controller.set_abs_max_output(MAX_VOLTAGE_MV);
+  auto state = this->odometry.get_state();
+  auto start_time = pros::millis();
+  while (pros::millis() - start_time < timeout()) {
+    auto ang = controller.calculate(
+        state.pose.theta.convert<units::angle::degrees>()(), target());
+    this->move(0_MV, millivolt_t(ang));
+    state = this->odometry.get_state();
+    pros::Task::delay(10);
+  }
+  this->stop();
+}
+
 // TODO add slew rate limiter
 void DifferentialDrivetrain::rotate_to(degree_t target,
                                        NonLinearPidConstants constants,
@@ -87,11 +107,10 @@ void DifferentialDrivetrain::rotate_to(degree_t target,
   controller.set_abs_max_output(MAX_VOLTAGE_MV);
   auto state = this->odometry.get_state();
   auto start_time = pros::millis();
-  while (units::math::abs(state.pose.theta - target) > tolerance &&
-         pros::millis() - start_time < timeout()) {
+  while (pros::millis() - start_time < timeout()) {
     auto ang = controller.calculate(
         state.pose.theta.convert<units::angle::degrees>()(), target());
-    this->move(0_MV, millivolt_t(ang));
+    this->move(0_MV, millivolt_t(-ang));
     state = this->odometry.get_state();
     pros::Task::delay(10);
   }

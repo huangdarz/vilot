@@ -38,6 +38,7 @@ class DifferentialDrivetrain {
   using meters_per_second_squared_t =
       units::acceleration::meters_per_second_squared_t;
   using radians_per_second_t = units::angular_velocity::radians_per_second_t;
+  using degrees_per_second_t = units::angular_velocity::degrees_per_second_t;
   using meter_t = units::length::meter_t;
   using radian_t = units::angle::radian_t;
   using degree_t = units::angle::degree_t;
@@ -59,6 +60,8 @@ public:
               meters_per_second_squared_t deceleration,
               float follow_strength = 0.5, float follow_dampen = 0.05);
 
+  void rotate_to(degree_t target, PidConstants constants, degree_t tolerance,
+                 millisecond_t timeout = millisecond_t(3000));
   void rotate_to(degree_t target, NonLinearPidConstants constants,
                  degree_t tolerance,
                  millisecond_t timeout = millisecond_t(3000));
