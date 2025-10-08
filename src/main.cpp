@@ -18,6 +18,8 @@ auto bot = vilot::DifferentialDrivetrain(
     12.668_in, 1.5_in, odom, MOTORS(11, -12, 13, 14), MOTORS(-16, 17, -18, -19),
     0.8, pros::v5::MotorGears::blue);
 
+pros::Controller master(pros::E_CONTROLLER_MASTER);
+
 /**
  * Runs initialization code. This occurs as soon as the program is started.
  *
@@ -30,6 +32,7 @@ void initialize() {
 
   // imu.start();
   odom.start();
+  master.rumble(". .");
   pros::Task([=]() {
     while (true) {
       auto state = odom.get_state();
@@ -48,13 +51,11 @@ void competition_initialize() {}
 void autonomous() {
   // bot.follow(3_m, 1.92_mps, 1.2_mps_sq, 0.9_mps_sq, 0.5, 0.05);
   // vilot::NonLinearPidConstants kon(0.1, 0.05, 0.000001, 0, 0, 0, 0);
-  vilot::PidConstants kon(10, 0, 0.01);
-  bot.rotate_to(180_deg, kon, 0.5_deg, 10000_ms);
+  vilot::PidConstants kon(2, 0.3, 1);
+  bot.rotate_to(45_deg, kon, 0.2_deg, 10000_ms);
 }
 
 void opcontrol() {
-  pros::Controller master(pros::E_CONTROLLER_MASTER);
-
   auto time = pros::millis();
   while (true) {
     // pros::lcd::set_text(

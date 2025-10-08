@@ -8,9 +8,10 @@ namespace vilot {
 
 PidController::PidController(PidConstants constants, const second_t sample_time)
     : kP(constants.kP), kI(constants.kI), kD(constants.kD), kF(constants.kF),
-      sample_time(sample_time), abs_max_output(600.0), integrator(0.0),
-      prev_error(0.0), differentiator(0.0), prev_measurement(0.0),
-      is_continuous_input(false), input_modulus(-M_PI, M_PI) {}
+      tau(0.01), sample_time(sample_time), abs_max_output(600.0),
+      integrator(0.0), prev_error(0.0), differentiator(0.0),
+      prev_measurement(0.0), is_continuous_input(false),
+      input_modulus(-M_PI, M_PI) {}
 
 float PidController::calculate(float measurement, float setpoint) {
   float error = setpoint - measurement;
@@ -36,17 +37,22 @@ float PidController::calculate(float measurement, float setpoint) {
   this->integrator = std::clamp(this->integrator, min_integral, max_integral);
 
   // differential
-  // derivative on measurement
+  // derivative on measurement with low-pass filter
+  float derivative_raw =
+      -(measurement - this->prev_measurement) / this->sample_time.value();
+
   this->differentiator =
-      -(2.0 * this->kD * (measurement - this->prev_measurement) +
-        (2.0 * this->tau - this->sample_time.value()) * this->differentiator) /
+      (2.0 * this->tau * derivative_raw +
+       (2.0 * this->tau - this->sample_time.value()) * this->differentiator) /
       (2.0 * this->tau + this->sample_time.value());
+
+  float d_output = this->kD * this->differentiator;
 
   // feedforward
   float f_output = this->kF * setpoint;
 
   // output
-  float output = p_output + this->integrator + this->differentiator + f_output;
+  float output = p_output + this->integrator + d_output + f_output;
   output = std::clamp(output, -abs_max_output, abs_max_output);
 
   // update previous

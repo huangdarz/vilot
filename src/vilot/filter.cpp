@@ -100,7 +100,13 @@ float input_modulus_filter(float input, float min_input, float max_input) {
   }
 
   // Shift back to [min_input, max_input)
-  return normalized + min_input;
+  float result = normalized + min_input;
+
+  if (result >= max_input) {
+    result = min_input;
+  }
+
+  return result;
 }
 
 InputModulusFilter::InputModulusFilter(float min_input, float max_input)

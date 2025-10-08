@@ -78,6 +78,12 @@ void DifferentialDrivetrain::follow(meter_t distance,
 void DifferentialDrivetrain::rotate_to(degree_t target, PidConstants constants,
                                        degree_t tolerance,
                                        millisecond_t timeout) {
+  using namespace units::math;
+  this->chassis.left.set_brake_mode_all(
+      pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_BRAKE);
+  this->chassis.right.set_brake_mode_all(
+      pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_BRAKE);
+  vilot::ExpDecayFilter decay(1);
   PidController controller(constants);
   controller.set_continuous_input(true);
   controller.set_max_input(180);
@@ -85,21 +91,31 @@ void DifferentialDrivetrain::rotate_to(degree_t target, PidConstants constants,
   controller.set_abs_max_output(MAX_VOLTAGE_MV);
   auto state = this->odometry.get_state();
   auto start_time = pros::millis();
-  while (pros::millis() - start_time < timeout()) {
-    auto ang = controller.calculate(
-        state.pose.theta.convert<units::angle::degrees>()(), target());
-    this->move(0_MV, millivolt_t(ang));
+  while (pros::millis() - start_time < timeout() ||
+         abs(target - state.pose.theta) > tolerance) {
+    auto ang =
+        controller.calculate(this->odometry.get_state()
+                                 .pose.theta.convert<units::angle::degrees>()(),
+                             target());
+    float turn =
+        decay.apply(millivolt_t(ang)(), units::time::millisecond_t(10));
+    this->move(0_MV, millivolt_t(-turn));
     state = this->odometry.get_state();
     pros::Task::delay(10);
   }
   this->stop();
+  this->chassis.left.set_brake_mode_all(
+      pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_COAST);
+  this->chassis.right.set_brake_mode_all(
+      pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_COAST);
 }
 
-// TODO add slew rate limiter
 void DifferentialDrivetrain::rotate_to(degree_t target,
                                        NonLinearPidConstants constants,
                                        degree_t tolerance,
                                        millisecond_t timeout) {
+  using namespace units::math;
+  vilot::ExpDecayFilter decay(0.5);
   NonlinearPidController controller(constants);
   controller.set_continuous_input(true);
   controller.set_max_input(180);
@@ -107,10 +123,13 @@ void DifferentialDrivetrain::rotate_to(degree_t target,
   controller.set_abs_max_output(MAX_VOLTAGE_MV);
   auto state = this->odometry.get_state();
   auto start_time = pros::millis();
-  while (pros::millis() - start_time < timeout()) {
+  while (pros::millis() - start_time < timeout() ||
+         abs(target - state.pose.theta) > tolerance) {
     auto ang = controller.calculate(
         state.pose.theta.convert<units::angle::degrees>()(), target());
-    this->move(0_MV, millivolt_t(-ang));
+    float turn =
+        decay.apply(millivolt_t(ang)(), units::time::millisecond_t(10));
+    this->move(0_MV, millivolt_t(-turn));
     state = this->odometry.get_state();
     pros::Task::delay(10);
   }
