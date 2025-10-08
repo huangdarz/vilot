@@ -62,12 +62,6 @@ public:
 
   void rotate_to(degree_t target, PidConstants constants, degree_t tolerance,
                  millisecond_t timeout = millisecond_t(3000));
-  void rotate_to(degree_t target, NonLinearPidConstants constants,
-                 degree_t tolerance,
-                 millisecond_t timeout = millisecond_t(3000));
-  void rotate_for(degree_t amount, NonLinearPidConstants constants,
-                  degree_t tolerance,
-                  millisecond_t timeout = millisecond_t(3000));
 
   void tank(millivolt_t left, millivolt_t right);
 

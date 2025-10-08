@@ -110,40 +110,6 @@ void DifferentialDrivetrain::rotate_to(degree_t target, PidConstants constants,
       pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_COAST);
 }
 
-void DifferentialDrivetrain::rotate_to(degree_t target,
-                                       NonLinearPidConstants constants,
-                                       degree_t tolerance,
-                                       millisecond_t timeout) {
-  using namespace units::math;
-  vilot::ExpDecayFilter decay(0.5);
-  NonlinearPidController controller(constants);
-  controller.set_continuous_input(true);
-  controller.set_max_input(180);
-  controller.set_min_input(-180);
-  controller.set_abs_max_output(MAX_VOLTAGE_MV);
-  auto state = this->odometry.get_state();
-  auto start_time = pros::millis();
-  while (pros::millis() - start_time < timeout() ||
-         abs(target - state.pose.theta) > tolerance) {
-    auto ang = controller.calculate(
-        state.pose.theta.convert<units::angle::degrees>()(), target());
-    float turn =
-        decay.apply(millivolt_t(ang)(), units::time::millisecond_t(10));
-    this->move(0_MV, millivolt_t(-turn));
-    state = this->odometry.get_state();
-    pros::Task::delay(10);
-  }
-  this->stop();
-}
-
-void DifferentialDrivetrain::rotate_for(degree_t amount,
-                                        NonLinearPidConstants constants,
-                                        degree_t tolerance,
-                                        millisecond_t timeout) {
-  auto state = this->odometry.get_state();
-  this->rotate_to(state.pose.theta + amount, constants, tolerance, timeout);
-}
-
 void DifferentialDrivetrain::tank(millivolt_t left, millivolt_t right) {
   this->chassis.left.move(std::clamp(left(), -MAX_VOLTAGE_MV, MAX_VOLTAGE_MV));
   this->chassis.right.move(
