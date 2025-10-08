@@ -345,6 +345,4 @@ private:
   float max_input; ///< Maximum value of the allowed range
 };
 
-class SlewRateLimiter {};
-
 } // namespace vilot
