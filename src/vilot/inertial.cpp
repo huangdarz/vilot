@@ -183,7 +183,7 @@ void Imu::reset(const radian_t yaw, const radian_t pitch, const radian_t roll) {
   mut.unlock();
 }
 
-void Imu::start() {
+bool Imu::start() {
   using namespace units::math;
 
   this->inertial.reset(true);
@@ -218,6 +218,11 @@ void Imu::start() {
   this->mut.unlock();
 
   this->is_calibrating = false;
+
+  mut.lock();
+  bool success = !std::isnan(this->filter.yaw()());
+  mut.unlock();
+  return success;
 }
 
 degree_t Imu::get_heading() const {

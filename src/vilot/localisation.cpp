@@ -1,6 +1,7 @@
 #include "vilot/localisation.hpp"
 #include "pros/rtos.h"
 #include "units.h"
+#include <cmath>
 
 namespace vilot::localisation {
 
@@ -82,14 +83,18 @@ localisation::ChassisState Odometry::get_state() {
   return this->dead_reckoning.lock()->get_state();
 }
 
-void Odometry::start() {
-  this->imu.start();
+bool Odometry::start() {
+  bool imu_started_success = this->imu.start();
+  if (!imu_started_success) {
+    return false;
+  }
   this->parallel.start();
   if (perpendicular.has_value()) {
     perpendicular->start();
   }
   pros::Task::delay(40);
   this->task.notify();
+  return true;
 }
 
 void Odometry::update() {

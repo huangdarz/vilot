@@ -355,7 +355,7 @@ public:
    * @warning Do not move the robot during calibration as this will affect
    *          the accuracy of the orientation reference.
    */
-  void start();
+  bool start();
 
   /**
    * @brief Get the current heading (yaw) angle

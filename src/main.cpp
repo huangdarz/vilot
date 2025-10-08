@@ -31,8 +31,12 @@ void initialize() {
   pros::lcd::set_text(1, "Hello PROS User!");
 
   // imu.start();
-  odom.start();
-  master.rumble(". .");
+  bool start_success = odom.start();
+  if (start_success) {
+    master.rumble(". .");
+  } else {
+    master.rumble("- - -");
+  }
   pros::Task([=]() {
     while (true) {
       auto state = odom.get_state();

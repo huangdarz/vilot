@@ -62,7 +62,7 @@ public:
            std::optional<int8_t> perpendicular = std::nullopt,
            std::optional<millimeter_t> middle_distance = std::nullopt);
 
-  void start();
+  bool start();
 
   localisation::ChassisState get_state();
 
