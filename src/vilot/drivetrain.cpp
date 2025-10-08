@@ -75,20 +75,29 @@ void DifferentialDrivetrain::follow(meter_t distance,
   this->stop();
 }
 
-void DifferentialDrivetrain::rotate_to(degree_t target, PidConstants constants,
+bool DifferentialDrivetrain::rotate_to(degree_t target, PidConstants constants,
                                        degree_t tolerance,
                                        millisecond_t timeout) {
+  // TODO check if need minimum output speed to turn robot
+  // TODO test for all other angles
+  // TODO consider switching to using velocity control
+  // TODO test and change to delay_until
+
   using namespace units::math;
+
   this->chassis.left.set_brake_mode_all(
       pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_BRAKE);
   this->chassis.right.set_brake_mode_all(
       pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_BRAKE);
+
   vilot::ExpDecayFilter decay(1);
+
   PidController controller(constants);
   controller.set_continuous_input(true);
   controller.set_max_input(180);
   controller.set_min_input(-180);
   controller.set_abs_max_output(MAX_VOLTAGE_MV);
+
   auto state = this->odometry.get_state();
   auto start_time = pros::millis();
   while (pros::millis() - start_time < timeout() ||
@@ -104,10 +113,13 @@ void DifferentialDrivetrain::rotate_to(degree_t target, PidConstants constants,
     pros::Task::delay(10);
   }
   this->stop();
+
   this->chassis.left.set_brake_mode_all(
       pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_COAST);
   this->chassis.right.set_brake_mode_all(
       pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_COAST);
+
+  return abs(target - state.pose.theta) > tolerance;
 }
 
 void DifferentialDrivetrain::tank(millivolt_t left, millivolt_t right) {

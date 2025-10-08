@@ -60,7 +60,7 @@ public:
               meters_per_second_squared_t deceleration,
               float follow_strength = 0.5, float follow_dampen = 0.05);
 
-  void rotate_to(degree_t target, PidConstants constants, degree_t tolerance,
+  bool rotate_to(degree_t target, PidConstants constants, degree_t tolerance,
                  millisecond_t timeout = millisecond_t(3000));
 
   void tank(millivolt_t left, millivolt_t right);
