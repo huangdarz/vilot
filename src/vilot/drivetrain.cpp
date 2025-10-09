@@ -79,9 +79,6 @@ bool DifferentialDrivetrain::rotate_to(degree_t target, PidConstants constants,
                                        degree_t tolerance,
                                        millisecond_t timeout) {
   // TODO check if need minimum output speed to turn robot
-  // TODO test for all other angles
-  // TODO consider switching to using velocity control
-  // TODO test and change to delay_until
 
   using namespace units::math;
 
@@ -100,15 +97,15 @@ bool DifferentialDrivetrain::rotate_to(degree_t target, PidConstants constants,
 
   auto state = this->odometry.get_state();
   auto start_time = pros::millis();
-  while (pros::millis() - start_time < timeout() ||
+  while (pros::millis() - start_time < timeout() &&
          abs(target - state.pose.theta) > tolerance) {
     auto ang =
         controller.calculate(this->odometry.get_state()
                                  .pose.theta.convert<units::angle::degrees>()(),
                              target());
-    float turn =
-        decay.apply(millivolt_t(ang)(), units::time::millisecond_t(10));
-    this->move(0_MV, millivolt_t(-turn));
+    float turn = decay.apply(degrees_per_second_t(ang)(),
+                             units::time::millisecond_t(10));
+    this->move(0_mps, degrees_per_second_t(-turn));
     state = this->odometry.get_state();
     pros::Task::delay(10);
   }
@@ -119,7 +116,7 @@ bool DifferentialDrivetrain::rotate_to(degree_t target, PidConstants constants,
   this->chassis.right.set_brake_mode_all(
       pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_COAST);
 
-  return abs(target - state.pose.theta) > tolerance;
+  return abs(target - state.pose.theta) <= tolerance;
 }
 
 void DifferentialDrivetrain::tank(millivolt_t left, millivolt_t right) {
