@@ -68,6 +68,8 @@ void DifferentialDrivetrain::follow(meter_t distance,
                                                  acceleration, deceleration);
   auto controller = vilot::RamseteController(follow_strength, follow_dampen);
 
+  auto prev_time = pros::millis();
+
   units::time::millisecond_t total_ms = motion.motion_total_time();
   units::time::millisecond_t step_size_period = 10_ms;
   int iterations = total_ms / step_size_period;
@@ -83,7 +85,7 @@ void DifferentialDrivetrain::follow(meter_t distance,
         meters_per_second_t(std::copysign(pp.velocity(), distance())), 0_rps);
     this->move(lin, ang);
     state = this->odometry.get_state();
-    pros::Task::delay(10);
+    pros::Task::delay_until(&prev_time, 10);
   }
   this->stop();
 }
@@ -103,6 +105,8 @@ bool DifferentialDrivetrain::rotate_to(degree_t target, PidConstants constants,
   controller.set_min_input(-180);
   controller.set_abs_max_output(MAX_VOLTAGE_MV);
 
+  auto prev_time = pros::millis();
+
   auto state = this->odometry.get_state();
   auto start_time = pros::millis();
   while (pros::millis() - start_time < timeout() &&
@@ -115,7 +119,7 @@ bool DifferentialDrivetrain::rotate_to(degree_t target, PidConstants constants,
                              units::time::millisecond_t(10));
     this->move(0_mps, degrees_per_second_t(-turn));
     state = this->odometry.get_state();
-    pros::Task::delay(10);
+    pros::Task::delay_until(&prev_time, 10);
   }
   this->stop();
 
