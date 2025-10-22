@@ -5,6 +5,7 @@
 #include "units.h"
 #include "voyage/motionprofile.hpp"
 #include <algorithm>
+#include <cmath>
 #include <numbers>
 
 namespace vilot {
@@ -48,10 +49,18 @@ void DifferentialDrivetrain::follow(meter_t distance,
                                     meters_per_second_squared_t deceleration,
                                     float follow_strength,
                                     float follow_dampen) {
+  assert(max_velocity() > 0 && "Max velocity must be positive");
+  assert(acceleration() > 0 && "Acceleration must be positive");
+  assert(deceleration() > 0 && "Deceleration must be positive");
+  assert(follow_strength > 0 && "Follow strength must be positive");
+  assert(follow_dampen > 0 && "Follow dampen must be positive");
+
+  // using namespace units::math;
+
   auto state = this->odometry.get_state();
   const auto start_state = state;
-  auto motion = voyage::TrapezoidalMotionProfile<units::length::meter>(
-      distance, max_velocity, acceleration, deceleration);
+  auto motion = voyage::TrapezoidalMotionProfile(distance, max_velocity,
+                                                 acceleration, deceleration);
   auto controller = vilot::RamseteController(follow_strength, follow_dampen);
 
   units::time::millisecond_t total_ms = motion.motion_total_time();
@@ -67,8 +76,7 @@ void DifferentialDrivetrain::follow(meter_t distance,
                              {start_state.pose.x + pp.position,
                               start_state.pose.y, start_state.pose.theta},
                              pp.velocity, 0_rps);
-    this->move(units::velocity::meters_per_second_t(lin),
-               units::angular_velocity::radians_per_second_t(ang));
+    this->move(lin, ang);
     state = this->odometry.get_state();
     pros::Task::delay(10);
   }
