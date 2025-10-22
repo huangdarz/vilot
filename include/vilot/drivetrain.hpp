@@ -26,7 +26,7 @@ struct DifferentialChassis {
                       const float gear_ratio_in_out, Args &&...shared_args)
       : left(left_motors, std::forward<Args>(shared_args)...),
         right(right_motors, std::forward<Args>(shared_args)...),
-        gear_ratio_in_out(gear_ratio_in_out) {}
+        gear_ratio_in_out(1 / gear_ratio_in_out) {}
 
   pros::MotorGroup left;
   pros::MotorGroup right;

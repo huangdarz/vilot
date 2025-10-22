@@ -17,13 +17,21 @@ using namespace units::angular_velocity;
 
 void DifferentialDrivetrain::move(meters_per_second_t x,
                                   radians_per_second_t theta) {
-  float left_vel = x() / (this->wheel_radius() * 2 * std::numbers::pi) +
-                   (theta() * this->track_width() / 2.0f);
-  float right_vel = x() / (this->wheel_radius() * 2 * std::numbers::pi) -
-                    (theta() * this->track_width() / 2.0f);
+  // float left_vel = x() / (this->wheel_radius() * 2 * std::numbers::pi) * 60.0
+  // +
+  //                  (theta() * this->track_width() / 2.0f);
+  // float right_vel = x() / (this->wheel_radius() * 2 * std::numbers::pi)
+  // * 60.0 -
+  //                   (theta() * this->track_width() / 2.0f);
+  //
+  // revolutions_per_minute_t left_rot = revolutions_per_minute_t(left_vel);
+  // revolutions_per_minute_t right_rot = revolutions_per_minute_t(right_vel);
 
-  revolutions_per_minute_t left_rot = radians_per_second_t(left_vel);
-  revolutions_per_minute_t right_rot = radians_per_second_t(right_vel);
+  float linear = (x() * this->chassis.gear_ratio_in_out * 60.0) /
+                 (std::numbers::pi * 2 * this->wheel_radius());
+  float rotate =
+      (theta() * this->track_width() * this->chassis.gear_ratio_in_out * 60.0) /
+      (std::numbers::pi * 2 * this->wheel_radius());
 
   // revolutions_per_minute_t left_rot = revolutions_per_minute_t(
   //     units::convert<radians_per_second, revolutions_per_minute>(left_vel *
@@ -32,17 +40,14 @@ void DifferentialDrivetrain::move(meters_per_second_t x,
   //     units::convert<radians_per_second, revolutions_per_minute>(right_vel *
   //                                                                RPS_TO_RPM));
 
-  this->chassis.left.move_velocity(left_rot() *
-                                   this->chassis.gear_ratio_in_out);
-  this->chassis.right.move_velocity(right_rot() *
-                                    this->chassis.gear_ratio_in_out);
+  this->chassis.left.move_velocity(linear + rotate);
+  this->chassis.right.move_velocity(linear - rotate);
 }
 
 void DifferentialDrivetrain::move(millivolt_t forward, millivolt_t turn) {
   this->tank(forward + turn, forward - turn);
 }
 
-// TODO add reverse
 void DifferentialDrivetrain::follow(meter_t distance,
                                     meters_per_second_t max_velocity,
                                     meters_per_second_squared_t acceleration,
@@ -55,11 +60,11 @@ void DifferentialDrivetrain::follow(meter_t distance,
   assert(follow_strength > 0 && "Follow strength must be positive");
   assert(follow_dampen > 0 && "Follow dampen must be positive");
 
-  // using namespace units::math;
+  using namespace units::math;
 
   auto state = this->odometry.get_state();
   const auto start_state = state;
-  auto motion = voyage::TrapezoidalMotionProfile(distance, max_velocity,
+  auto motion = voyage::TrapezoidalMotionProfile(abs(distance), max_velocity,
                                                  acceleration, deceleration);
   auto controller = vilot::RamseteController(follow_strength, follow_dampen);
 
@@ -71,11 +76,11 @@ void DifferentialDrivetrain::follow(meter_t distance,
     auto t =
         static_cast<float>(i) * motion.motion_total_time() / (iterations - 1);
     auto pp = motion.sample(units::time::millisecond_t(t));
-    auto [lin, ang] =
-        controller.calculate(state.pose,
-                             {start_state.pose.x + pp.position,
-                              start_state.pose.y, start_state.pose.theta},
-                             pp.velocity, 0_rps);
+    auto [lin, ang] = controller.calculate(
+        state.pose,
+        {start_state.pose.x + meter_t(std::copysign(pp.position(), distance())),
+         start_state.pose.y, start_state.pose.theta},
+        meters_per_second_t(std::copysign(pp.velocity(), distance())), 0_rps);
     this->move(lin, ang);
     state = this->odometry.get_state();
     pros::Task::delay(10);
