@@ -1,6 +1,7 @@
 #pragma once
 
 #include "pros/motor_group.hpp"
+#include "pros/motors.h"
 #include "units.h"
 #include "vilot/localisation.hpp"
 #include "vilot/pid.h"
@@ -65,7 +66,8 @@ public:
 
   void tank(millivolt_t left, millivolt_t right);
 
-  void stop();
+  void stop(const pros::motor_brake_mode_e_t mode =
+                pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_BRAKE);
 
 private:
   DifferentialChassis chassis;

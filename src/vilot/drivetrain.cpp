@@ -95,11 +95,6 @@ bool DifferentialDrivetrain::rotate_to(degree_t target, PidConstants constants,
 
   using namespace units::math;
 
-  this->chassis.left.set_brake_mode_all(
-      pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_BRAKE);
-  this->chassis.right.set_brake_mode_all(
-      pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_BRAKE);
-
   vilot::ExpDecayFilter decay(1);
 
   PidController controller(constants);
@@ -124,11 +119,6 @@ bool DifferentialDrivetrain::rotate_to(degree_t target, PidConstants constants,
   }
   this->stop();
 
-  this->chassis.left.set_brake_mode_all(
-      pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_COAST);
-  this->chassis.right.set_brake_mode_all(
-      pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_COAST);
-
   return abs(target - state.pose.theta) <= tolerance;
 }
 
@@ -138,9 +128,15 @@ void DifferentialDrivetrain::tank(millivolt_t left, millivolt_t right) {
       std::clamp(right(), -MAX_VOLTAGE_MV, MAX_VOLTAGE_MV));
 }
 
-void DifferentialDrivetrain::stop() {
+void DifferentialDrivetrain::stop(const pros::motor_brake_mode_e_t mode) {
+  auto curr_mode_left = this->chassis.left.get_brake_mode();
+  auto curr_mode_right = this->chassis.right.get_brake_mode();
+  this->chassis.left.set_brake_mode_all(mode);
+  this->chassis.right.set_brake_mode_all(mode);
   this->chassis.left.brake();
   this->chassis.right.brake();
+  this->chassis.left.set_brake_mode_all(curr_mode_left);
+  this->chassis.right.set_brake_mode_all(curr_mode_right);
 }
 
 } // namespace vilot
