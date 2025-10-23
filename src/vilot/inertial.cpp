@@ -186,8 +186,10 @@ void Imu::reset(const radian_t yaw, const radian_t pitch, const radian_t roll) {
 bool Imu::start() {
   using namespace units::math;
 
-  this->inertial.reset(true);
-  pros::Task::delay(3000);
+  this->inertial.reset(false);
+  while (this->inertial.is_calibrating()) {
+    pros::Task::delay(100);
+  }
   this->task.notify();
 
   etl::circular_buffer<radian_t, 100> window;
