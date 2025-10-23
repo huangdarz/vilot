@@ -53,14 +53,12 @@ void disabled() {}
 void competition_initialize() {}
 
 void autonomous() {
-  bot.follow(2_m, 1.92_mps, 1.5_mps_sq, 0.6_mps_sq, 3.2, 0.05);
-  // vilot::NonLinearPidConstants kon(0.1, 0.05, 0.000001, 0, 0, 0, 0);
-  // vilot::PidConstants kon(2, 0.1, 1);
-  // vilot::PidConstants kon(106, 0, 70);
-  // bool success = bot.rotate_to(45_deg, kon, 0.2_deg, 10000_ms);
-  // if (success) {
-  master.rumble(".");
-  // }
+  // bot.follow(2_m, 1.92_mps, 1.5_mps_sq, 0.6_mps_sq, 3.2, 0.05);
+  vilot::PidConstants kon(1, 0, 0);
+  bool success = bot.rotate_to(90_deg, kon, 0.2_deg, 12_deg_per_s, 10000_ms);
+  if (success) {
+    master.rumble(".");
+  }
 }
 
 void opcontrol() {

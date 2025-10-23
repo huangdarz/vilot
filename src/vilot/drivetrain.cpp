@@ -101,12 +101,18 @@ void DifferentialDrivetrain::follow(meter_t distance,
 
 bool DifferentialDrivetrain::rotate_to(degree_t target, PidConstants constants,
                                        degree_t tolerance,
+                                       degrees_per_second_t min_speed,
                                        millisecond_t timeout) {
   // TODO check if need minimum output speed to turn robot
 
   using namespace units::math;
 
-  vilot::ExpDecayFilter decay(1);
+  auto curr_mode_left = this->chassis.left.get_brake_mode();
+  auto curr_mode_right = this->chassis.right.get_brake_mode();
+  this->chassis.left.set_brake_mode_all(
+      pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_BRAKE);
+  this->chassis.right.set_brake_mode_all(
+      pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_BRAKE);
 
   PidController controller(constants);
   controller.set_continuous_input(true);
@@ -115,22 +121,32 @@ bool DifferentialDrivetrain::rotate_to(degree_t target, PidConstants constants,
   controller.set_abs_max_output(MAX_VOLTAGE_MV);
 
   auto prev_time = pros::millis();
+  degrees_per_second_t prev_val = 0_deg_per_s;
 
   auto state = this->odometry.get_state();
   auto start_time = pros::millis();
-  while (pros::millis() - start_time < timeout() &&
-         abs(target - state.pose.theta) > tolerance) {
+  while (pros::millis() - start_time < timeout()) {
     auto ang =
         controller.calculate(this->odometry.get_state()
                                  .pose.theta.convert<units::angle::degrees>()(),
                              target());
-    float turn = decay.apply(degrees_per_second_t(ang)(),
-                             units::time::millisecond_t(10));
-    this->move(0_mps, degrees_per_second_t(-turn));
+    // auto turn = -degrees_per_second_t(decay.apply(
+    //     degrees_per_second_t(ang)(), units::time::millisecond_t(10)));
+    degrees_per_second_t turn = degrees_per_second_t(-ang);
+    degrees_per_second_t min_turn = fmax(abs(turn), abs(min_speed));
+    degrees_per_second_t val = copysign(min_turn, turn);
+    prev_val = val;
+    this->move(0_mps, val);
     state = this->odometry.get_state();
     pros::Task::delay_until(&prev_time, 10);
   }
   this->stop();
+
+  state = this->odometry.get_state();
+  printf("DONE!!!!\n");
+
+  this->chassis.left.set_brake_mode_all(curr_mode_left);
+  this->chassis.right.set_brake_mode_all(curr_mode_right);
 
   return abs(target - state.pose.theta) <= tolerance;
 }

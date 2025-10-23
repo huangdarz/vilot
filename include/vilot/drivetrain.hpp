@@ -62,6 +62,7 @@ public:
               float follow_strength = 0.5, float follow_dampen = 0.05);
 
   bool rotate_to(degree_t target, PidConstants constants, degree_t tolerance,
+                 degrees_per_second_t min_speed,
                  millisecond_t timeout = millisecond_t(3000));
 
   void tank(millivolt_t left, millivolt_t right);
