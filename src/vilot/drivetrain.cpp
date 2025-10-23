@@ -74,20 +74,29 @@ void DifferentialDrivetrain::follow(meter_t distance,
   units::time::millisecond_t step_size_period = 10_ms;
   int iterations = total_ms / step_size_period;
 
-  for (int i = 0; i < iterations; i++) {
-    auto t =
-        static_cast<float>(i) * motion.motion_total_time() / (iterations - 1);
+  auto curr_mode_left = this->chassis.left.get_brake_mode();
+  auto curr_mode_right = this->chassis.right.get_brake_mode();
+  this->chassis.left.set_brake_mode_all(
+      pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_BRAKE);
+  this->chassis.right.set_brake_mode_all(
+      pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_BRAKE);
+
+  for (int i = 0; i <= iterations; i++) {
+    auto t = static_cast<float>(i) * total_ms() / (iterations);
     auto pp = motion.sample(units::time::millisecond_t(t));
     auto [lin, ang] = controller.calculate(
         state.pose,
         {start_state.pose.x + meter_t(std::copysign(pp.position(), distance())),
          start_state.pose.y, start_state.pose.theta},
         meters_per_second_t(std::copysign(pp.velocity(), distance())), 0_rps);
-    this->move(lin, ang);
+    this->move(lin, -ang);
     state = this->odometry.get_state();
     pros::Task::delay_until(&prev_time, 10);
   }
   this->stop();
+
+  this->chassis.left.set_brake_mode_all(curr_mode_left);
+  this->chassis.right.set_brake_mode_all(curr_mode_right);
 }
 
 bool DifferentialDrivetrain::rotate_to(degree_t target, PidConstants constants,

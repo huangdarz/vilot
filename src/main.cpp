@@ -53,7 +53,7 @@ void disabled() {}
 void competition_initialize() {}
 
 void autonomous() {
-  bot.follow(2_m, 1.92_mps, 1.2_mps_sq, 0.9_mps_sq, 1.1, 0.05);
+  bot.follow(2_m, 1.92_mps, 1.5_mps_sq, 0.6_mps_sq, 3.2, 0.05);
   // vilot::NonLinearPidConstants kon(0.1, 0.05, 0.000001, 0, 0, 0, 0);
   // vilot::PidConstants kon(2, 0.1, 1);
   // vilot::PidConstants kon(106, 0, 70);
