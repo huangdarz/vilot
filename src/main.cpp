@@ -6,7 +6,7 @@
 #include "units.h"
 #include "vilot/drivetrain.hpp"
 #include "vilot/localisation.hpp"
-#include "vilot/pid.h"
+#include "vilot/pid.hpp"
 #include <string>
 
 using namespace units::literals;
@@ -53,12 +53,17 @@ void disabled() {}
 void competition_initialize() {}
 
 void autonomous() {
-  // bot.follow(2_m, 1.92_mps, 1.5_mps_sq, 0.6_mps_sq, 3.2, 0.05);
+  vilot::SettleCondition cond{
+      .condition = [](float m, float g) { return fabs(m - g) < 0.5; },
+      .settle_time = 400};
   vilot::PidConstants kon(1, 0, 0);
-  bool success = bot.rotate_to(90_deg, kon, 0.2_deg, 12_deg_per_s, 10000_ms);
-  if (success) {
-    master.rumble(".");
-  }
+
+  bot.follow(2_m, 1.92_mps, 1.5_mps_sq, 0.6_mps_sq, 3.2, 0.05);
+  bot.rotate_to(90_deg, kon, cond, 5_deg_per_s, 10000_ms);
+  bot.follow(2_m, 1.92_mps, 1.5_mps_sq, 0.6_mps_sq, 3.2, 0.05);
+  bot.rotate_to(90_deg, kon, cond, 5_deg_per_s, 10000_ms);
+
+  master.rumble(".");
 }
 
 void opcontrol() {

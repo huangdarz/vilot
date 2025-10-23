@@ -1,4 +1,5 @@
-#include "vilot/pid.h"
+#include "vilot/pid.hpp"
+#include "pros/rtos.hpp"
 #include <algorithm>
 #include <cmath>
 
@@ -97,6 +98,20 @@ void PidController::set_max_input(float max_input) {
 
 void PidController::set_continuous_input(bool is_continuous_input) {
   this->is_continuous_input = is_continuous_input;
+}
+
+bool SettleCondition::check(float measurement, float goal) {
+  if (this->condition(measurement, goal)) {
+    if (!this->prev_success) {
+      this->prev_time = pros::millis();
+    }
+    this->prev_success = true;
+  } else {
+    this->prev_success = false;
+    this->prev_time = pros::millis();
+  }
+  return pros::millis() - this->prev_time >= this->settle_time &&
+         this->prev_success;
 }
 
 } // namespace vilot

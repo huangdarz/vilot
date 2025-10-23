@@ -2,6 +2,7 @@
 
 #include "units.h"
 #include "vilot/filter.h"
+#include <functional>
 
 namespace vilot {
 
@@ -160,6 +161,16 @@ private:
   bool is_continuous_input;
 
   InputModulusFilter input_modulus;
+};
+
+struct SettleCondition {
+  // basically if its within the tolerance for a set amount of time
+  std::function<bool(float, float)> condition;
+  const uint32_t settle_time;
+  uint32_t prev_time;
+  bool prev_success;
+
+  bool check(float measurement, float goal);
 };
 
 } // namespace vilot

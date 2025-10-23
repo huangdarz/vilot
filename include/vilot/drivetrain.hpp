@@ -4,7 +4,7 @@
 #include "pros/motors.h"
 #include "units.h"
 #include "vilot/localisation.hpp"
-#include "vilot/pid.h"
+#include "vilot/pid.hpp"
 
 namespace vilot {
 
@@ -61,7 +61,8 @@ public:
               meters_per_second_squared_t deceleration,
               float follow_strength = 0.5, float follow_dampen = 0.05);
 
-  bool rotate_to(degree_t target, PidConstants constants, degree_t tolerance,
+  bool rotate_to(degree_t target, PidConstants constants,
+                 SettleCondition settle_condition,
                  degrees_per_second_t min_speed,
                  millisecond_t timeout = millisecond_t(3000));
 

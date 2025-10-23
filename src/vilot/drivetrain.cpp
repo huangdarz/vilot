@@ -1,5 +1,5 @@
 #include "vilot/drivetrain.hpp"
-#include "pid.h"
+#include "pid.hpp"
 #include "pros/rtos.hpp"
 #include "ramsete.hpp"
 #include "units.h"
@@ -100,11 +100,9 @@ void DifferentialDrivetrain::follow(meter_t distance,
 }
 
 bool DifferentialDrivetrain::rotate_to(degree_t target, PidConstants constants,
-                                       degree_t tolerance,
+                                       SettleCondition settle_condition,
                                        degrees_per_second_t min_speed,
                                        millisecond_t timeout) {
-  // TODO check if need minimum output speed to turn robot
-
   using namespace units::math;
 
   auto curr_mode_left = this->chassis.left.get_brake_mode();
@@ -125,7 +123,9 @@ bool DifferentialDrivetrain::rotate_to(degree_t target, PidConstants constants,
 
   auto state = this->odometry.get_state();
   auto start_time = pros::millis();
-  while (pros::millis() - start_time < timeout()) {
+  while (pros::millis() - start_time < timeout() &&
+         !settle_condition.check(
+             state.pose.theta.convert<units::angle::degrees>()(), target())) {
     auto ang =
         controller.calculate(this->odometry.get_state()
                                  .pose.theta.convert<units::angle::degrees>()(),
@@ -143,12 +143,11 @@ bool DifferentialDrivetrain::rotate_to(degree_t target, PidConstants constants,
   this->stop();
 
   state = this->odometry.get_state();
-  printf("DONE!!!!\n");
 
   this->chassis.left.set_brake_mode_all(curr_mode_left);
   this->chassis.right.set_brake_mode_all(curr_mode_right);
 
-  return abs(target - state.pose.theta) <= tolerance;
+  return !(pros::millis() - start_time < timeout());
 }
 
 void DifferentialDrivetrain::tank(millivolt_t left, millivolt_t right) {
