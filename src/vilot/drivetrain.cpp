@@ -1,4 +1,5 @@
 #include "vilot/drivetrain.hpp"
+#include "Eigen/src/Core/Matrix.h"
 #include "pid.hpp"
 #include "pros/rtos.hpp"
 #include "ramsete.hpp"
@@ -81,18 +82,31 @@ void DifferentialDrivetrain::follow(meter_t distance,
   this->chassis.right.set_brake_mode_all(
       pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_BRAKE);
 
+  Eigen::Vector2f unit_direction(std::cos(start_state.pose.theta()),
+                                 std::sin(start_state.pose.theta()));
+
   for (int i = 0; i <= iterations; i++) {
     auto t = static_cast<float>(i) * total_ms() / (iterations);
     auto pp = motion.sample(units::time::millisecond_t(t));
+
+    meter_t magnitude = copysign(pp.position, distance);
+    Eigen::Vector2f direction = magnitude() * unit_direction;
+
+    Pose2d desired{start_state.pose.x + meter_t(direction.x()),
+                   start_state.pose.y + meter_t(direction.y()),
+                   start_state.pose.theta};
+
     auto [lin, ang] = controller.calculate(
-        state.pose,
-        {start_state.pose.x + meter_t(std::copysign(pp.position(), distance())),
-         start_state.pose.y, start_state.pose.theta},
+        state.pose, desired,
         meters_per_second_t(std::copysign(pp.velocity(), distance())), 0_rps);
+
     this->move(lin, -ang);
+
     state = this->odometry.get_state();
+
     pros::Task::delay_until(&prev_time, 10);
   }
+
   this->stop();
 
   this->chassis.left.set_brake_mode_all(curr_mode_left);
