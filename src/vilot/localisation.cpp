@@ -1,29 +1,34 @@
 #include "vilot/localisation.hpp"
+#include <cmath>
 #include "pros/rtos.h"
 #include "units.h"
-#include <cmath>
 
-namespace vilot::localisation {
+namespace vilot {
 
 using namespace units::time;
+using namespace units::literals;
 
-DeadReckoning::DeadReckoning(millimeter_t centre_displacement,
-                             millimeter_t middle_distance,
-                             millimeter_t wheel_circumference)
+DeadReckoning::DeadReckoning(const millimeter_t centre_displacement,
+                             const millimeter_t middle_distance,
+                             const millimeter_t wheel_circumference)
     : centre_displacement(centre_displacement),
       middle_distance(middle_distance),
-      wheel_circumference(wheel_circumference) {}
+      wheel_circumference(wheel_circumference),
+      heading(0_deg),
+      velocity(0_mps),
+      prev_parallel(0_m),
+      prev_perpendicular(0_m) {}
 
-void DeadReckoning::update(radian_t yaw, degree_t parallel,
-                           degree_t perpendicular, second_t dt) {
-  meter_t parallel_displacement =
+void DeadReckoning::update(const radian_t yaw, const degree_t parallel,
+                           const degree_t perpendicular, const second_t dt) {
+  const auto parallel_displacement =
       meter_t(parallel() / (360.0 / this->wheel_circumference()));
-  meter_t perpendicular_displacement =
+  const meter_t perpendicular_displacement =
       this->middle_distance()
           ? meter_t(0.0)
           : meter_t(perpendicular() / (360.0 / this->middle_distance()));
 
-  meter_t delta_parallel_displacement =
+  const meter_t delta_parallel_displacement =
       parallel_displacement - this->prev_parallel;
   this->prev_parallel = parallel_displacement;
 
@@ -31,13 +36,13 @@ void DeadReckoning::update(radian_t yaw, degree_t parallel,
       perpendicular_displacement - this->prev_perpendicular;
   this->prev_perpendicular = perpendicular_displacement;
 
-  radian_t delta_theta = yaw - this->heading;
+  const radian_t delta_theta = yaw - this->heading;
   this->heading = degree_t(yaw);
 
   Eigen::Vector2f local_displacement(0, 0);
 
   if (delta_theta()) {
-    float scalar = std::sin(delta_theta() / 2.0) * 2.0;
+    const float scalar = std::sin(delta_theta() / 2.0) * 2.0;
     local_displacement = {(delta_parallel_displacement() / delta_theta() -
                            this->centre_displacement()) *
                               scalar,
@@ -48,67 +53,22 @@ void DeadReckoning::update(radian_t yaw, degree_t parallel,
                           delta_perpendicular_displacement};
   }
 
-  float p = yaw() - delta_theta() / 2.0;
-  Eigen::Rotation2Df rot(p);
-  Eigen::Vector2f global_displacement = rot * local_displacement;
+  const float p = yaw() - delta_theta() / 2.0;
+  const Eigen::Rotation2Df rot(p);
+  const Eigen::Vector2f global_displacement = rot * local_displacement;
 
   this->position += global_displacement;
   this->velocity = parallel_displacement / dt;
 }
 
-ChassisState DeadReckoning::get_state() {
-  return {{meter_t(this->position.x()), meter_t(this->position.y()),
-           radian_t(this->heading)},
-          this->velocity};
+RobotPose2d DeadReckoning::get_state() const {
+  return {meter_t(this->position.x()), meter_t(this->position.y()),
+          radian_t(this->heading)};
 }
 
-} // namespace vilot::localisation
-
-namespace vilot::device {
-
-Odometry::Odometry(uint8_t imu, int8_t parallel,
-                   millimeter_t centre_displacement,
-                   millimeter_t wheel_circumference,
-                   std::optional<int8_t> perpendicular,
-                   std::optional<millimeter_t> middle_distance)
-    : imu(imu), parallel(parallel), perpendicular(perpendicular),
-      dead_reckoning(centre_displacement,
-                     middle_distance.value_or(millimeter_t(0)),
-                     wheel_circumference),
-      task(pros::Task::current()) {
-  this->task = pros::Task([this]() { this->update(); }, TASK_PRIORITY_MAX - 1);
+void DeadReckoning::tare(meter_t x, meter_t y) {
+  this->position = Eigen::Vector2f{x(), y()};
+  this->velocity = meters_per_second_t(0);
 }
 
-localisation::ChassisState Odometry::get_state() {
-  return this->dead_reckoning.lock()->get_state();
-}
-
-bool Odometry::start() {
-  bool imu_started_success = this->imu.start();
-  if (!imu_started_success) {
-    return false;
-  }
-  this->parallel.start();
-  if (perpendicular.has_value()) {
-    perpendicular->start();
-  }
-  pros::Task::delay(40);
-  this->task.notify();
-  return true;
-}
-
-void Odometry::update() {
-  this->task.notify_take(true, TIMEOUT_MAX);
-  auto start = pros::millis();
-  for (;;) {
-    radian_t yaw = this->imu.get_heading();
-    degree_t parallel_pos = parallel.get_position();
-    degree_t perpendicular_pos =
-        perpendicular.has_value() ? perpendicular->get_position() : degree_t(0);
-    this->dead_reckoning.lock()->update(yaw, parallel_pos, perpendicular_pos,
-                                        units::time::millisecond_t(10));
-    pros::Task::delay_until(&start, 10);
-  }
-}
-
-} // namespace vilot::device
+}  // namespace vilot
