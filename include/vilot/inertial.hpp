@@ -48,7 +48,7 @@ class Madgwick {
   using radian_t = units::angle::radian_t;
   using radians_per_second_t = units::angular_velocity::radians_per_second_t;
   using meters_per_second_squared_t =
-      units::acceleration::meters_per_second_squared_t;
+  units::acceleration::meters_per_second_squared_t;
   using hertz_t = units::frequency::hertz_t;
 
 public:
@@ -146,7 +146,7 @@ public:
 
 private:
   const float sample_freq; ///< Sample frequency in Hz
-  const float beta;        ///< Filter gain parameter
+  const float beta; ///< Filter gain parameter
 
   // Quaternion components (w, x, y, z)
   float q1 = 1; // 0.7071068; // 1 ///< Quaternion w component (scalar part)
@@ -155,9 +155,9 @@ private:
   float q4 = 0; ///< Quaternion z component
 
   // Angle offsets for taring functionality
-  radian_t roll_offset;  ///< Roll angle offset from taring
+  radian_t roll_offset; ///< Roll angle offset from taring
   radian_t pitch_offset; ///< Pitch angle offset from taring
-  radian_t yaw_offset;   ///< Yaw angle offset from taring
+  radian_t yaw_offset; ///< Yaw angle offset from taring
 };
 
 /**
@@ -187,11 +187,9 @@ float inv_sqrt(float value) noexcept;
  */
 units::angle::radian_t offset_angle(units::angle::radian_t angle,
                                     units::angle::radian_t offset) noexcept;
-
 } // namespace vilot
 
 namespace vilot::device {
-
 /**
  * @brief High-level IMU (Inertial Measurement Unit) wrapper with sensor fusion
  *
@@ -244,7 +242,7 @@ class Imu {
   using degree_t = units::angle::degree_t;
   using radians_per_second_t = units::angular_velocity::radians_per_second_t;
   using meters_per_second_squared_t =
-      units::acceleration::meters_per_second_squared_t;
+  units::acceleration::meters_per_second_squared_t;
   using hertz_t = units::frequency::hertz_t;
 
 public:
@@ -256,24 +254,24 @@ public:
   /**
    * @brief Copy constructor is deleted (non-copyable due to hardware resource)
    */
-  Imu(const Imu &) = delete;
+  Imu(const Imu&) = delete;
 
   /**
    * @brief Copy assignment operator is deleted (non-copyable due to hardware
    * resource)
    */
-  Imu &operator=(const Imu &) = delete;
+  Imu& operator=(const Imu&) = delete;
 
   /**
    * @brief Move constructor is deleted (non-moveable due to running task)
    */
-  Imu(Imu &&) = delete;
+  Imu(Imu&&) = delete;
 
   /**
    * @brief Move assignment operator is deleted (non-moveable due to running
    * task)
    */
-  Imu &operator=(Imu &&) = delete;
+  Imu& operator=(Imu&&) = delete;
 
   /**
    * @brief Construct a new IMU object
@@ -380,10 +378,10 @@ private:
    */
   [[noreturn]] void update();
 
-  pros::Task task;         ///< Background task for sensor reading
-  pros::Imu inertial;      ///< PROS IMU sensor interface
-  Madgwick filter;         ///< Madgwick AHRS filter for sensor fusion
-  bool is_calibrating;     ///< Flag indicating calibration status
+  pros::Task task; ///< Background task for sensor reading
+  pros::Imu inertial; ///< PROS IMU sensor interface
+  Madgwick filter; ///< Madgwick AHRS filter for sensor fusion
+  bool is_calibrating; ///< Flag indicating calibration status
   mutable pros::Mutex mut; ///< Mutex for thread-safe filter access
 };
 
