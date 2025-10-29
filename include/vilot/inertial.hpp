@@ -6,6 +6,16 @@
 
 namespace vilot {
 
+template <typename T>
+concept OrientationProvider =
+    requires(T t, const T& ct, units::angle::radian_t yaw,
+             units::angle::radian_t pitch, units::angle::radian_t roll) {
+  { t.tare(yaw, pitch, roll) } -> std::same_as<void>;
+  { ct.get_yaw() } -> std::convertible_to<units::angle::degree_t>;
+  { ct.get_pitch() } -> std::convertible_to<units::angle::degree_t>;
+  { ct.get_roll() } -> std::convertible_to<units::angle::degree_t>;
+};
+
 /**
  * @brief Madgwick AHRS (Attitude and Heading Reference System) filter
  * implementation
@@ -48,10 +58,10 @@ class Madgwick {
   using radian_t = units::angle::radian_t;
   using radians_per_second_t = units::angular_velocity::radians_per_second_t;
   using meters_per_second_squared_t =
-  units::acceleration::meters_per_second_squared_t;
+      units::acceleration::meters_per_second_squared_t;
   using hertz_t = units::frequency::hertz_t;
 
-public:
+ public:
   /**
    * @brief Default constructor is deleted to enforce proper initialization
    */
@@ -144,20 +154,20 @@ public:
    */
   [[nodiscard]] Eigen::Quaternionf quaternion() const noexcept;
 
-private:
-  const float sample_freq; ///< Sample frequency in Hz
-  const float beta; ///< Filter gain parameter
+ private:
+  const float sample_freq;  ///< Sample frequency in Hz
+  const float beta;         ///< Filter gain parameter
 
   // Quaternion components (w, x, y, z)
-  float q1 = 1; // 0.7071068; // 1 ///< Quaternion w component (scalar part)
-  float q2 = 0; // 0.7071068; ///< Quaternion x component
-  float q3 = 0; ///< Quaternion y component
-  float q4 = 0; ///< Quaternion z component
+  float q1 = 1;  // 0.7071068; // 1 ///< Quaternion w component (scalar part)
+  float q2 = 0;  // 0.7071068; ///< Quaternion x component
+  float q3 = 0;  ///< Quaternion y component
+  float q4 = 0;  ///< Quaternion z component
 
   // Angle offsets for taring functionality
-  radian_t roll_offset; ///< Roll angle offset from taring
-  radian_t pitch_offset; ///< Pitch angle offset from taring
-  radian_t yaw_offset; ///< Yaw angle offset from taring
+  radian_t roll_offset;   ///< Roll angle offset from taring
+  radian_t pitch_offset;  ///< Pitch angle offset from taring
+  radian_t yaw_offset;    ///< Yaw angle offset from taring
 };
 
 /**
@@ -187,7 +197,7 @@ float inv_sqrt(float value) noexcept;
  */
 units::angle::radian_t offset_angle(units::angle::radian_t angle,
                                     units::angle::radian_t offset) noexcept;
-} // namespace vilot
+}  // namespace vilot
 
 namespace vilot::device {
 /**
@@ -242,10 +252,10 @@ class Imu {
   using degree_t = units::angle::degree_t;
   using radians_per_second_t = units::angular_velocity::radians_per_second_t;
   using meters_per_second_squared_t =
-  units::acceleration::meters_per_second_squared_t;
+      units::acceleration::meters_per_second_squared_t;
   using hertz_t = units::frequency::hertz_t;
 
-public:
+ public:
   /**
    * @brief Default constructor is deleted to enforce proper initialization
    */
@@ -360,7 +370,7 @@ public:
    */
   uint8_t get_port() const;
 
-private:
+ private:
   /**
    * @brief Background sensor reading and filtering loop
    *
@@ -378,11 +388,11 @@ private:
    */
   [[noreturn]] void update();
 
-  pros::Task task; ///< Background task for sensor reading
-  pros::Imu inertial; ///< PROS IMU sensor interface
-  Madgwick filter; ///< Madgwick AHRS filter for sensor fusion
-  bool is_calibrating; ///< Flag indicating calibration status
-  mutable pros::Mutex mut; ///< Mutex for thread-safe filter access
+  pros::Task task;          ///< Background task for sensor reading
+  pros::Imu inertial;       ///< PROS IMU sensor interface
+  Madgwick filter;          ///< Madgwick AHRS filter for sensor fusion
+  bool is_calibrating;      ///< Flag indicating calibration status
+  mutable pros::Mutex mut;  ///< Mutex for thread-safe filter access
 };
 
-} // namespace vilot::device
+}  // namespace vilot::device
