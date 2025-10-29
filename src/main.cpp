@@ -1,5 +1,7 @@
 #include "main.h"
+#include <string>
 #include "liblvgl/llemu.hpp"
+#include "policy/CHassis.hpp"
 #include "pros/abstract_motor.hpp"
 #include "pros/misc.h"
 #include "pros/rtos.hpp"
@@ -7,16 +9,15 @@
 #include "vilot/drivetrain.hpp"
 #include "vilot/localisation.hpp"
 #include "vilot/pid.hpp"
-#include <string>
 
 using namespace units::literals;
 
 // vilot::device::Imu imu(7);
-vilot::device::Odometry odom(7, 4, 16.5_cm, 131.9_mm);
-
-auto bot = vilot::DifferentialDrivetrain(
-    12.668_in, 1.5_in, odom, MOTORS(11, -12, 13, 14), MOTORS(-16, 17, -18, -19),
-    0.8, pros::v5::MotorGears::blue);
+// vilot::device::Odometry odom(7, 4, 16.5_cm, 131.9_mm);
+//
+// auto bot = vilot::DifferentialDrivetrain(
+//     12.668_in, 1.5_in, odom, MOTORS(11, -12, 13, 14), MOTORS(-16, 17, -18, -19),
+//     0.8, pros::v5::MotorGears::blue);
 
 pros::Controller master(pros::E_CONTROLLER_MASTER);
 
@@ -31,21 +32,21 @@ void initialize() {
   pros::lcd::set_text(1, "Hello PROS User!");
 
   // imu.start();
-  bool start_success = odom.start();
-  if (start_success) {
-    master.rumble(". .");
-  } else {
-    master.rumble("- - -");
-  }
-  pros::Task([=]() {
-    while (true) {
-      auto state = odom.get_state();
-      printf("Heading: %f | X: %f\n",
-             state.pose.theta.convert<units::angle::degree>().value(),
-             state.pose.x.value());
-      pros::Task::delay(500);
-    }
-  });
+  // bool start_success = odom.start();
+  // if (start_success) {
+  //   master.rumble(". .");
+  // } else {
+  //   master.rumble("- - -");
+  // }
+  // pros::Task([=]() {
+  //   while (true) {
+  //     auto state = odom.get_state();
+  //     printf("Heading: %f | X: %f\n",
+  //            state.pose.theta.convert<units::angle::degree>().value(),
+  //            state.pose.x.value());
+  //     pros::Task::delay(500);
+  //   }
+  // });
 }
 
 void disabled() {}
@@ -53,15 +54,15 @@ void disabled() {}
 void competition_initialize() {}
 
 void autonomous() {
-  vilot::SettleCondition cond{
-      .condition = [](float m, float g) { return fabs(m - g) < 0.5; },
-      .settle_time = 400};
-  vilot::PidConstants kon(1, 0, 0);
-
-  bot.follow(2_m, 1.92_mps, 1.5_mps_sq, 0.6_mps_sq, 3.2, 0.05);
-  bot.rotate_to(90_deg, kon, cond, 5_deg_per_s, 10000_ms);
-  bot.follow(2_m, 1.92_mps, 1.5_mps_sq, 0.6_mps_sq, 3.2, 0.05);
-  bot.rotate_to(90_deg, kon, cond, 5_deg_per_s, 10000_ms);
+  // vilot::SettleCondition cond{
+  //     .condition = [](float m, float g) { return fabs(m - g) < 0.5; },
+  //     .settle_time = 400};
+  // vilot::PidConstants kon(1, 0, 0);
+  //
+  // bot.follow(2_m, 1.92_mps, 1.5_mps_sq, 0.6_mps_sq, 3.2, 0.05);
+  // bot.rotate_to(90_deg, kon, cond, 5_deg_per_s, 10000_ms);
+  // bot.follow(2_m, 1.92_mps, 1.5_mps_sq, 0.6_mps_sq, 3.2, 0.05);
+  // bot.rotate_to(90_deg, kon, cond, 5_deg_per_s, 10000_ms);
 
   master.rumble(".");
 }
@@ -77,11 +78,11 @@ void opcontrol() {
     // pros::lcd::set_text(2, "X: " +
     // std::to_string(odom.get_state().x.value()));
 
-    auto left_y = static_cast<float>(master.get_analog(ANALOG_LEFT_Y)) / 127.f;
-    auto right_x =
-        static_cast<float>(master.get_analog(ANALOG_RIGHT_X)) / 127.f;
-    bot.move(units::voltage::millivolt_t(left_y * 12000),
-             units::voltage::millivolt_t(right_x * 12000));
+    // auto left_y = static_cast<float>(master.get_analog(ANALOG_LEFT_Y)) / 127.f;
+    // auto right_x =
+    //     static_cast<float>(master.get_analog(ANALOG_RIGHT_X)) / 127.f;
+    // bot.move(units::voltage::millivolt_t(left_y * 12000),
+    //          units::voltage::millivolt_t(right_x * 12000));
 
     pros::Task::delay_until(&time, 25);
   }
