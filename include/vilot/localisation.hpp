@@ -2,7 +2,7 @@
 #include "Eigen/Dense"
 #include "pros/rtos.hpp"
 #include "units.h"
-#include "vilot/inertial.h"
+#include "vilot/inertial.hpp"
 #include "vilot/rotation.h"
 #include "vilot/util.h"
 

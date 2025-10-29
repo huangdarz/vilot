@@ -3,7 +3,6 @@
 #include "Eigen/Dense"
 #include "pros/imu.hpp"
 #include "units.h"
-#include <cstdint>
 
 namespace vilot {
 
@@ -67,7 +66,7 @@ public:
    * sensitivity Lower values provide slower convergence but better noise
    * rejection Typical range: 0.01 to 1.0
    */
-  Madgwick(const hertz_t sample_freq, const float beta = 0.3);
+  explicit Madgwick(hertz_t sample_freq, float beta = 0.3);
 
   /**
    * @brief Tare (zero/calibrate) the filter orientation
@@ -79,9 +78,8 @@ public:
    * @param pitch Target pitch angle after taring (default: 0 radians)
    * @param roll Target roll angle after taring (default: 0 radians)
    */
-  void tare(const radian_t yaw = radian_t(0),
-            const radian_t pitch = radian_t(0),
-            const radian_t roll = radian_t(0)) noexcept;
+  void tare(radian_t yaw = radian_t(0), radian_t pitch = radian_t(0),
+            radian_t roll = radian_t(0)) noexcept;
 
   /**
    * @brief Get the current roll angle
@@ -91,7 +89,7 @@ public:
    *
    * @return The roll angle in radians, offset-corrected
    */
-  const radian_t roll() const noexcept;
+  [[nodiscard]] radian_t roll() const noexcept;
 
   /**
    * @brief Get the current pitch angle
@@ -101,7 +99,7 @@ public:
    *
    * @return The pitch angle in radians, offset-corrected
    */
-  const radian_t pitch() const noexcept;
+  [[nodiscard]] radian_t pitch() const noexcept;
 
   /**
    * @brief Get the current yaw angle
@@ -114,7 +112,7 @@ public:
    *
    * @return The yaw angle in radians, offset-corrected
    */
-  const radian_t yaw() const noexcept;
+  [[nodiscard]] radian_t yaw() const noexcept;
 
   /**
    * @brief Update the filter with new sensor measurements
@@ -130,30 +128,10 @@ public:
    * @param ay Accelerometer y-axis in meters per second squared
    * @param az Accelerometer z-axis in meters per second squared
    */
-  void calculate(const radians_per_second_t gx, const radians_per_second_t gy,
-                 const radians_per_second_t gz,
-                 const meters_per_second_squared_t ax,
-                 const meters_per_second_squared_t ay,
-                 const meters_per_second_squared_t az) noexcept;
-
-  /**
-   * @brief Functional operator for updating the filter
-   *
-   * Convenience operator that calls calculate() with the same parameters.
-   * Allows the filter object to be used as a function.
-   *
-   * @param gx Gyroscope x-axis (roll rate) in radians per second
-   * @param gy Gyroscope y-axis (pitch rate) in radians per second
-   * @param gz Gyroscope z-axis (yaw rate) in radians per second
-   * @param ax Accelerometer x-axis in meters per second squared
-   * @param ay Accelerometer y-axis in meters per second squared
-   * @param az Accelerometer z-axis in meters per second squared
-   */
-  void operator()(const radians_per_second_t gx, const radians_per_second_t gy,
-                  const radians_per_second_t gz,
-                  const meters_per_second_squared_t ax,
-                  const meters_per_second_squared_t ay,
-                  const meters_per_second_squared_t az) noexcept;
+  void calculate(radians_per_second_t gx, radians_per_second_t gy,
+                 radians_per_second_t gz, meters_per_second_squared_t ax,
+                 meters_per_second_squared_t ay,
+                 meters_per_second_squared_t az) noexcept;
 
   /**
    * @brief Get the current orientation as a quaternion
@@ -162,9 +140,9 @@ public:
    * The quaternion follows the convention: w + xi + yj + zk where
    * w is the scalar part and (x,y,z) is the vector part.
    *
-   * @return Eigen::Quaternionf representing the current orientation
+   * @return Quaternion representing the current orientation
    */
-  Eigen::Quaternionf quaternion() const noexcept;
+  [[nodiscard]] Eigen::Quaternionf quaternion() const noexcept;
 
 private:
   const float sample_freq; ///< Sample frequency in Hz
@@ -172,9 +150,9 @@ private:
 
   // Quaternion components (w, x, y, z)
   float q1 = 1; // 0.7071068; // 1 ///< Quaternion w component (scalar part)
-  float q2;     // 0.7071068; ///< Quaternion x component
-  float q3;     ///< Quaternion y component
-  float q4;     ///< Quaternion z component
+  float q2 = 0; // 0.7071068; ///< Quaternion x component
+  float q3 = 0; ///< Quaternion y component
+  float q4 = 0; ///< Quaternion z component
 
   // Angle offsets for taring functionality
   radian_t roll_offset;  ///< Roll angle offset from taring
@@ -194,7 +172,7 @@ private:
  *
  * @see https://en.wikipedia.org/wiki/Fast_inverse_square_root
  */
-const float inv_sqrt(const float value) noexcept;
+float inv_sqrt(float value) noexcept;
 
 /**
  * @brief Apply angle offset and wrap result to (-180°, 180°] range
@@ -315,7 +293,7 @@ public:
    *
    * @see Madgwick::Madgwick() for more details on the beta parameter
    */
-  Imu(const uint8_t port, const float beta = 0.3);
+  explicit Imu(uint8_t port, float beta = 0.3);
 
   /**
    * @brief Reset/tare the IMU orientation
@@ -331,9 +309,8 @@ public:
    * @note This operation is thread-safe and can be called while the sensor
    *       is actively being read by the background task.
    */
-  void reset(const radian_t yaw = radian_t(0),
-             const radian_t pitch = radian_t(0),
-             const radian_t roll = radian_t(0));
+  void reset(radian_t yaw = radian_t(0), radian_t pitch = radian_t(0),
+             radian_t roll = radian_t(0));
 
   /**
    * @brief Start IMU calibration and operation
@@ -401,7 +378,7 @@ private:
    * @note This function is automatically started when the IMU object is created
    *       and runs until the object is destroyed.
    */
-  void update();
+  [[noreturn]] void update();
 
   pros::Task task;         ///< Background task for sensor reading
   pros::Imu inertial;      ///< PROS IMU sensor interface
