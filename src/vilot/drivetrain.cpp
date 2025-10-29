@@ -1,13 +1,13 @@
 #include "vilot/drivetrain.hpp"
+#include <algorithm>
+#include <cmath>
+#include <numbers>
 #include "Eigen/src/Core/Matrix.h"
 #include "pid.hpp"
 #include "pros/rtos.hpp"
 #include "ramsete.hpp"
 #include "units.h"
 #include "voyage/motionprofile.hpp"
-#include <algorithm>
-#include <cmath>
-#include <numbers>
 
 namespace vilot {
 
@@ -92,9 +92,9 @@ void DifferentialDrivetrain::follow(meter_t distance,
     meter_t magnitude = copysign(pp.position, distance);
     Eigen::Vector2f direction = magnitude() * unit_direction;
 
-    Pose2d desired{start_state.pose.x + meter_t(direction.x()),
-                   start_state.pose.y + meter_t(direction.y()),
-                   start_state.pose.theta};
+    RobotPose2d desired{start_state.pose.x + meter_t(direction.x()),
+                        start_state.pose.y + meter_t(direction.y()),
+                        start_state.pose.theta};
 
     auto [lin, ang] = controller.calculate(
         state.pose, desired,
@@ -181,4 +181,4 @@ void DifferentialDrivetrain::stop(const pros::motor_brake_mode_e_t mode) {
   this->chassis.right.set_brake_mode_all(curr_mode_right);
 }
 
-} // namespace vilot
+}  // namespace vilot

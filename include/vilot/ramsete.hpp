@@ -1,9 +1,9 @@
 #pragma once
+#include <cmath>
+#include <tuple>
 #include "Eigen/Dense"
 #include "units.h"
 #include "vilot/util.h"
-#include <cmath>
-#include <tuple>
 
 namespace vilot {
 
@@ -16,15 +16,15 @@ class RamseteController {
   using radian_t = units::angle::radian_t;
   using radians_per_second_t = units::angular_velocity::radians_per_second_t;
 
-public:
+ public:
   RamseteController(float b, float zeta) : b(b), zeta(zeta) {}
 
-  std::tuple<meters_per_second_t, radians_per_second_t>
-  calculate(Pose2d actual, Pose2d desired,
-            meters_per_second_t desired_linear_velocity,
-            radians_per_second_t desired_angular_velocity) noexcept;
+  std::tuple<meters_per_second_t, radians_per_second_t> calculate(
+      RobotPose2d actual, RobotPose2d desired,
+      meters_per_second_t desired_linear_velocity,
+      radians_per_second_t desired_angular_velocity) noexcept;
 
-private:
+ private:
   float k_gain(meters_per_second_t desired_linear_velocity,
                radians_per_second_t desired_angular_velocity) noexcept;
 
@@ -32,4 +32,4 @@ private:
   float zeta;
 };
 
-} // namespace vilot
+}  // namespace vilot

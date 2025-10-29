@@ -2,22 +2,36 @@
 
 namespace vilot {
 
-Pose2d::Pose2d(Eigen::Vector2f vec, radian_t theta)
-    : x(meter_t(vec.x())), y(meter_t(vec.y())), theta(theta) {}
+using namespace units::length;
+using namespace units::angle;
 
-Pose2d::Pose2d(meter_t x, meter_t y, radian_t theta)
-    : x(x), y(y), theta(theta) {}
+RobotPose2d::RobotPose2d() : transform(Eigen::Isometry2f::Identity()) {}
 
-Eigen::Vector2f Pose2d::as_vec() { return Eigen::Vector2f{x, y}; }
+RobotPose2d::RobotPose2d(const meter_t x, const meter_t y,
+                         const radian_t theta) {
+  this->transform =
+      Eigen::Translation2f(x(), y()) * Eigen::Rotation2Df(theta());
+}
 
-Twist2d::Twist2d(Eigen::Vector2f vec, radians_per_second_t theta)
-    : x(meters_per_second_t(vec.x())), y(meters_per_second_t(vec.y())),
-      theta(theta) {}
+meter_t RobotPose2d::x() const noexcept {
+  return meter_t(this->transform.translation().x());
+}
 
-Twist2d::Twist2d(meters_per_second_t x, meters_per_second_t y,
-                 radians_per_second_t theta)
-    : x(x), y(y), theta(theta) {}
+meter_t RobotPose2d::y() const noexcept {
+  return meter_t(this->transform.translation().y());
+}
 
-Eigen::Vector2f Twist2d::as_vec() { return Eigen::Vector2f{x, y}; }
+radian_t RobotPose2d::theta() const noexcept {
+  const auto rot = this->transform.rotation();
+  return radian_t(std::atan2f(rot(1, 0), rot(0, 0)));
+}
 
-} // namespace vilot
+const Eigen::Isometry2f& RobotPose2d::get_transform() const {
+  return this->transform;
+}
+
+Eigen::Isometry2f& RobotPose2d::get_transform() {
+  return this->transform;
+}
+
+}  // namespace vilot

@@ -10,11 +10,11 @@ using radians_per_second_t = units::angular_velocity::radians_per_second_t;
 
 std::tuple<meters_per_second_t, radians_per_second_t>
 RamseteController::calculate(
-    Pose2d _actual, Pose2d _desired,
+    RobotPose2d _actual, RobotPose2d _desired,
     meters_per_second_t desired_linear_velocity,
     radians_per_second_t desired_angular_velocity) noexcept {
-  Eigen::Vector3f actual(_actual.x(), _actual.y(), _actual.theta());
-  Eigen::Vector3f desired(_desired.x(), _desired.y(), _desired.theta());
+  Eigen::Vector3f actual(_actual.x()(), _actual.y()(), _actual.theta()());
+  Eigen::Vector3f desired(_desired.x()(), _desired.y()(), _desired.theta()());
   Eigen::Vector3f global_error = desired - actual;
   Eigen::Matrix3f transformation;
   transformation << std::cosf(actual.z()), std::sinf(actual.z()), 0,
@@ -43,4 +43,4 @@ float RamseteController::k_gain(
                         desired_linear_velocity());
 }
 
-} // namespace vilot
+}  // namespace vilot
