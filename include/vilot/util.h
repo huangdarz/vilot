@@ -26,6 +26,9 @@ class RobotPose2d {
 template <typename T>
 concept Startable = requires(T t) {
   { t.start() } -> std::convertible_to<bool>;
+}
+
+|| requires(T t) {
   { t.start() } -> std::same_as<void>;
 };
 
