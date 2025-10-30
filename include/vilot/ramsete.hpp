@@ -3,7 +3,7 @@
 #include <tuple>
 #include "Eigen/Dense"
 #include "units.h"
-#include "vilot/util.h"
+#include "vilot/util.hpp"
 
 namespace vilot {
 

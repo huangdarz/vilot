@@ -4,7 +4,7 @@
 #include "units.h"
 #include "vilot/encoder.hpp"
 #include "vilot/inertial.hpp"
-#include "vilot/util.h"
+#include "vilot/util.hpp"
 
 namespace vilot {
 
