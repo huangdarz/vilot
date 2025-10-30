@@ -10,72 +10,46 @@ namespace vilot {
 
 #define MAX_VOLTAGE_MV 12000.f
 
-#define MOTORS(...)                                                            \
-  std::initializer_list<int8_t> { __VA_ARGS__ }
+#define MOTORS(...)               \
+  std::initializer_list<int8_t> { \
+    __VA_ARGS__                   \
+  }
 
 struct DifferentialChassis {
   using meter_t = units::length::meter_t;
   using millivolt_t = units::voltage::millivolt_t;
   using revolutions_per_minute_t =
       units::angular_velocity::revolutions_per_minute_t;
+  using meters_per_second_t = units::velocity::meters_per_second_t;
+  using radians_per_second_t = units::angular_velocity::radians_per_second_t;
 
   DifferentialChassis() = delete;
 
   template <typename... Args>
   DifferentialChassis(const std::initializer_list<int8_t> left_motors,
                       const std::initializer_list<int8_t> right_motors,
-                      const float gear_ratio_in_out, Args &&...shared_args)
+                      const float gear_ratio_out_in, const meter_t track_width,
+                      const meter_t wheel_radius, Args&&... shared_args)
       : left(left_motors, std::forward<Args>(shared_args)...),
         right(right_motors, std::forward<Args>(shared_args)...),
-        gear_ratio_in_out(1 / gear_ratio_in_out) {}
+        gear_ratio_out_in(gear_ratio_out_in),
+        track_width(track_width),
+        wheel_radius(wheel_radius) {}
+
+  void tank(millivolt_t left_, millivolt_t right_) const noexcept;
+
+  void move(meters_per_second_t x, radians_per_second_t theta) const noexcept;
+
+  void move(millivolt_t forward, millivolt_t turn) const noexcept;
+
+  void stop(pros::motor_brake_mode_e_t mode =
+                pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_BRAKE) const noexcept;
 
   pros::MotorGroup left;
   pros::MotorGroup right;
-  float gear_ratio_in_out;
+  const float gear_ratio_out_in;
+  const meter_t track_width;
+  const meter_t wheel_radius;
 };
 
-class DifferentialDrivetrain {
-  using meters_per_second_t = units::velocity::meters_per_second_t;
-  using meters_per_second_squared_t =
-      units::acceleration::meters_per_second_squared_t;
-  using radians_per_second_t = units::angular_velocity::radians_per_second_t;
-  using degrees_per_second_t = units::angular_velocity::degrees_per_second_t;
-  using meter_t = units::length::meter_t;
-  using radian_t = units::angle::radian_t;
-  using degree_t = units::angle::degree_t;
-  using millivolt_t = units::voltage::millivolt_t;
-  using millisecond_t = units::time::millisecond_t;
-
-public:
-  template <typename... Args>
-  DifferentialDrivetrain(meter_t track_width, meter_t wheel_radius,
-                         device::Odometry &odometry, Args &&...chassis_args)
-      : track_width(track_width), wheel_radius(wheel_radius),
-        chassis(std::forward<Args>(chassis_args)...), odometry(odometry) {}
-
-  void move(meters_per_second_t x, radians_per_second_t theta);
-  void move(millivolt_t forward, millivolt_t turn);
-
-  void follow(meter_t distance, meters_per_second_t max_velocity,
-              meters_per_second_squared_t acceleration,
-              meters_per_second_squared_t deceleration,
-              float follow_strength = 0.5, float follow_dampen = 0.05);
-
-  bool rotate_to(degree_t target, PidConstants constants,
-                 SettleCondition settle_condition,
-                 degrees_per_second_t min_speed,
-                 millisecond_t timeout = millisecond_t(3000));
-
-  void tank(millivolt_t left, millivolt_t right);
-
-  void stop(const pros::motor_brake_mode_e_t mode =
-                pros::motor_brake_mode_e_t::E_MOTOR_BRAKE_BRAKE);
-
-private:
-  DifferentialChassis chassis;
-  meter_t track_width;
-  meter_t wheel_radius;
-  device::Odometry &odometry;
-};
-
-} // namespace vilot
+}  // namespace vilot
