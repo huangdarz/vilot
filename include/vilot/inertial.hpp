@@ -317,8 +317,8 @@ class Imu {
    * @note This operation is thread-safe and can be called while the sensor
    *       is actively being read by the background task.
    */
-  void reset(radian_t yaw = radian_t(0), radian_t pitch = radian_t(0),
-             radian_t roll = radian_t(0));
+  void tare(radian_t yaw = radian_t(0), radian_t pitch = radian_t(0),
+            radian_t roll = radian_t(0));
 
   /**
    * @brief Start IMU calibration and operation

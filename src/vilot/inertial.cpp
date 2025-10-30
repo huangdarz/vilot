@@ -1,8 +1,8 @@
 #include "vilot/inertial.hpp"
+#include <cstdio>
 #include "etl/circular_buffer.h"
 #include "pros/rtos.h"
 #include "pros/rtos.hpp"
-#include <cstdio>
 
 namespace vilot {
 
@@ -12,8 +12,11 @@ using namespace units::acceleration;
 using namespace units::angular_velocity;
 
 Madgwick::Madgwick(const hertz_t sample_freq, const float beta)
-    : sample_freq(sample_freq()), beta(beta), roll_offset(0_rad),
-      pitch_offset(0_rad), yaw_offset(0_rad) {}
+    : sample_freq(sample_freq()),
+      beta(beta),
+      roll_offset(0_rad),
+      pitch_offset(0_rad),
+      yaw_offset(0_rad) {}
 
 void Madgwick::calculate(const radians_per_second_t gx,
                          const radians_per_second_t gy,
@@ -70,7 +73,7 @@ void Madgwick::calculate(const radians_per_second_t gx,
                _8q2 * q1q1 + _8q2 * q2q2 + _4q2 * _az;
     float s3 = 4.0f * q1q1 * q4 - _2q1 * _ax + 4.0f * q2q2 * q4 - _2q2 * _ay;
     recipNorm = inv_sqrt(s0 * s0 + s1 * s1 + s2 * s2 +
-                         s3 * s3); // normalise step magnitude
+                         s3 * s3);  // normalise step magnitude
     s0 *= recipNorm;
     s1 *= recipNorm;
     s2 *= recipNorm;
@@ -141,12 +144,13 @@ Eigen::Quaternionf Madgwick::quaternion() const noexcept {
 inline float inv_sqrt(const float value) noexcept {
   float halfx = 0.5f * value;
   float y = value;
-  long i = *(long *)&y;
+  long i = *(long*)&y;
   i = 0x5f3759df - (i >> 1);
-  y = *(float *)&i;
+  y = *(float*)&i;
   y = y * (1.5f - (halfx * y * y));
   return y;
 }
+
 // NOLINTEND
 
 radian_t offset_angle(const radian_t angle, const radian_t offset) noexcept {
@@ -155,18 +159,20 @@ radian_t offset_angle(const radian_t angle, const radian_t offset) noexcept {
                    units::math::floor((sum + degree_t(180)) / degree_t(360));
 }
 
-} // namespace vilot
+}  // namespace vilot
 
 namespace vilot::device {
 
 Imu::Imu(const uint8_t port, const float beta)
-    : task(pros::Task::current()), inertial(port), filter(100.0_Hz, beta),
+    : task(pros::Task::current()),
+      inertial(port),
+      filter(100.0_Hz, beta),
       is_calibrating(true) {
   this->task = pros::Task([this]() { this->update(); }, TASK_PRIORITY_MAX,
                           TASK_STACK_DEPTH_MIN);
 }
 
-void Imu::reset(const radian_t yaw, const radian_t pitch, const radian_t roll) {
+void Imu::tare(const radian_t yaw, const radian_t pitch, const radian_t roll) {
   mut.lock();
   this->filter.tare(yaw, pitch, roll);
   mut.unlock();
@@ -248,7 +254,9 @@ degree_t Imu::get_roll() const {
   return ret;
 }
 
-uint8_t Imu::get_port() const { return this->inertial.get_port(); }
+uint8_t Imu::get_port() const {
+  return this->inertial.get_port();
+}
 
 [[noreturn]] void Imu::update() {
   pros::Task::notify_take(true, TIMEOUT_MAX);
@@ -270,4 +278,4 @@ uint8_t Imu::get_port() const { return this->inertial.get_port(); }
   }
 }
 
-} // namespace vilot::device
+}  // namespace vilot::device
