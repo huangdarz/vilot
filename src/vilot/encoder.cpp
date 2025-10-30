@@ -1,7 +1,7 @@
-#include "vilot/rotation.h"
+#include "vilot/encoder.hpp"
+#include <utility>
 #include "pros/rtos.h"
 #include "pros/rtos.hpp"
-#include <utility>
 
 namespace vilot {
 
@@ -20,16 +20,19 @@ std::pair<degree_t, degrees_per_second_t> Encoder::update() {
 void Encoder::reset() {
   this->pos_filter.reset();
   this->vel_filter.reset();
+  this->rotation.reset();
 }
 
-} // namespace vilot
+}  // namespace vilot
 
 namespace vilot::device {
 
 using namespace units::angle;
 using namespace units::angular_velocity;
 
-void Rotation::start() { this->task.notify(); }
+void Rotation::start() {
+  this->task.notify();
+}
 
 void Rotation::update() {
   this->task.notify_take(true, TIMEOUT_MAX);
@@ -42,8 +45,16 @@ void Rotation::update() {
   }
 }
 
-degree_t Rotation::get_position() { return *this->position.lock(); }
+void Rotation::tare() {
+  this->encoder.reset();
+}
 
-degrees_per_second_t Rotation::get_velocity() { return *this->velocity.lock(); }
+degree_t Rotation::get_position() const {
+  return *this->position.lock();
+}
 
-} // namespace vilot::device
+degrees_per_second_t Rotation::get_velocity() const {
+  return *this->velocity.lock();
+}
+
+}  // namespace vilot::device

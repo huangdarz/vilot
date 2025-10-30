@@ -13,7 +13,7 @@ concept RotationEncoderProvider = requires(T t, const T& ct) {
   { ct.get_position() } -> std::convertible_to<units::angle::degree_t>;
   {
     ct.get_velocity()
-  } -> std::same_as<units::angular_velocity::degrees_per_second>;
+  } -> std::convertible_to<units::angular_velocity::degrees_per_second_t>;
 };
 
 class Encoder {
@@ -22,7 +22,7 @@ class Encoder {
 
  public:
   template <typename... Args>
-  Encoder(Args... args)
+  explicit Encoder(Args... args)
       : rotation(std::forward<Args>(args)...),
         pos_filter(100, 50),
         vel_filter(100, 50) {}
@@ -47,23 +47,24 @@ class Rotation {
 
  public:
   template <typename... Args>
-  Rotation(int8_t port)
+  explicit Rotation(int8_t port)
       : encoder(port), task(pros::Task::current()), position(0), velocity(0) {
     this->task = pros::Task([this]() { this->update(); });
   }
 
   void start();
 
-  degree_t get_position();
-  degrees_per_second_t get_velocity();
+  void tare();
+  degree_t get_position() const;
+  degrees_per_second_t get_velocity() const;
 
  private:
   void update();
 
   Encoder encoder;
   pros::Task task;
-  pros::MutexVar<degree_t> position;
-  pros::MutexVar<degrees_per_second_t> velocity;
+  mutable pros::MutexVar<degree_t> position;
+  mutable pros::MutexVar<degrees_per_second_t> velocity;
 };
 
 }  // namespace vilot::device

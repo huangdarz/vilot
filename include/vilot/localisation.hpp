@@ -2,8 +2,8 @@
 #include "Eigen/Dense"
 #include "pros/rtos.hpp"
 #include "units.h"
+#include "vilot/encoder.hpp"
 #include "vilot/inertial.hpp"
-#include "vilot/rotation.h"
 #include "vilot/util.h"
 
 namespace vilot {
@@ -62,14 +62,14 @@ class Odometry {
   requires OrientationProvider<std::remove_cvref_t<OPFwd>>&&
       RotationEncoderProvider<std::remove_cvref_t<REP_PARALLELFwd>>&&
           RotationEncoderProvider<std::remove_cvref_t<REP_PERPENDICULARFwd>>
-          Odometry(OPFwd&& orientation, REP_PARALLELFwd&& parallel,
+          Odometry(OPFwd& orientation, REP_PARALLELFwd& parallel,
                    millimeter_t centre_displacement,
                    millimeter_t wheel_circumference,
-                   REP_PERPENDICULARFwd&& perpendicular,
+                   REP_PERPENDICULARFwd& perpendicular,
                    millimeter_t middle_distance)
-      : orientation(std::forward<OPFwd>(orientation)),
-        parallel(std::forward<REP_PARALLELFwd>(parallel)),
-        perpendicular(std::forward<REP_PERPENDICULARFwd>(perpendicular)),
+      : orientation(orientation),
+        parallel(parallel),
+        perpendicular(perpendicular),
         dead_reckoning(centre_displacement, middle_distance,
                        wheel_circumference),
         task(pros::Task::current()) {
@@ -80,11 +80,11 @@ class Odometry {
   template <typename OPFwd, typename REP_PARALLELFwd>
   requires OrientationProvider<std::remove_cvref_t<OPFwd>>&&
       RotationEncoderProvider<std::remove_cvref_t<REP_PARALLELFwd>>
-      Odometry(OPFwd&& orientation, REP_PARALLELFwd&& parallel,
+      Odometry(OPFwd& orientation, REP_PARALLELFwd& parallel,
                millimeter_t centre_displacement,
                millimeter_t wheel_circumference)
-      : orientation(std::forward<OPFwd>(orientation)),
-        parallel(std::forward<REP_PARALLELFwd>(parallel)),
+      : orientation(orientation),
+        parallel(parallel),
         dead_reckoning(centre_displacement, millimeter_t(0),
                        wheel_circumference),
         task(pros::Task::current()) {
@@ -137,11 +137,14 @@ class Odometry {
     }
   }
 
-  OP orientation;
-  REP_PARALLEL parallel;
+  OP& orientation;
+  REP_PARALLEL& parallel;
   std::optional<REP_PERPENDICULAR> perpendicular;
   mutable pros::MutexVar<DeadReckoning> dead_reckoning;
   pros::Task task;
 };
+
+static_assert(PoseProvider<Odometry<device::Imu, device::Rotation>>);
+static_assert(Startable<Odometry<device::Imu, device::Rotation>>);
 
 }  // namespace vilot
