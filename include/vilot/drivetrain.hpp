@@ -10,7 +10,7 @@ namespace vilot {
 
 #define MAX_VOLTAGE_MV 12000.f
 
-#define MOTORS(...)               \
+#define PORTS(...)                \
   std::initializer_list<int8_t> { \
     __VA_ARGS__                   \
   }

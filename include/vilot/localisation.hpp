@@ -57,16 +57,9 @@ class Odometry {
  public:
   Odometry() = delete;
 
-  template <typename OPFwd, typename REP_PARALLELFwd,
-            typename REP_PERPENDICULARFwd>
-  requires OrientationProvider<std::remove_cvref_t<OPFwd>>&&
-      RotationEncoderProvider<std::remove_cvref_t<REP_PARALLELFwd>>&&
-          RotationEncoderProvider<std::remove_cvref_t<REP_PERPENDICULARFwd>>
-          Odometry(OPFwd& orientation, REP_PARALLELFwd& parallel,
-                   millimeter_t centre_displacement,
-                   millimeter_t wheel_circumference,
-                   REP_PERPENDICULARFwd& perpendicular,
-                   millimeter_t middle_distance)
+  Odometry(OP& orientation, REP_PARALLEL& parallel,
+           millimeter_t centre_displacement, millimeter_t wheel_circumference,
+           REP_PERPENDICULAR& perpendicular, millimeter_t middle_distance)
       : orientation(orientation),
         parallel(parallel),
         perpendicular(perpendicular),
@@ -77,12 +70,8 @@ class Odometry {
         pros::Task([this]() { this->update(); }, TASK_PRIORITY_MAX - 1);
   }
 
-  template <typename OPFwd, typename REP_PARALLELFwd>
-  requires OrientationProvider<std::remove_cvref_t<OPFwd>>&&
-      RotationEncoderProvider<std::remove_cvref_t<REP_PARALLELFwd>>
-      Odometry(OPFwd& orientation, REP_PARALLELFwd& parallel,
-               millimeter_t centre_displacement,
-               millimeter_t wheel_circumference)
+  Odometry(OP& orientation, REP_PARALLEL& parallel,
+           millimeter_t centre_displacement, millimeter_t wheel_circumference)
       : orientation(orientation),
         parallel(parallel),
         dead_reckoning(centre_displacement, millimeter_t(0),
@@ -104,7 +93,7 @@ class Odometry {
     }
     if constexpr (Startable<REP_PERPENDICULAR>) {
       if (this->perpendicular.has_value()) {
-        this->perpendicular->start;
+        this->perpendicular->start();
       }
     }
     pros::Task::delay(500);

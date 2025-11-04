@@ -1,23 +1,23 @@
 #include "main.h"
 #include <string>
 #include "liblvgl/llemu.hpp"
-#include "policy/CHassis.hpp"
 #include "pros/abstract_motor.hpp"
 #include "pros/misc.h"
 #include "pros/rtos.hpp"
 #include "units.h"
 #include "vilot/drivetrain.hpp"
 #include "vilot/localisation.hpp"
-#include "vilot/pid.hpp"
 
 using namespace units::literals;
+using namespace vilot;
 
-// vilot::device::Imu imu(7);
-// vilot::device::Odometry odom(7, 4, 16.5_cm, 131.9_mm);
-//
-// auto bot = vilot::DifferentialDrivetrain(
-//     12.668_in, 1.5_in, odom, MOTORS(11, -12, 13, 14), MOTORS(-16, 17, -18, -19),
-//     0.8, pros::v5::MotorGears::blue);
+device::Imu imu(7);
+device::Rotation rot(4);
+Odometry odom(imu, rot, 16.5_mm, 131.9_mm);
+
+DifferentialChassis chassis(PORTS(11, -12, 13, 14), PORTS(-16, 17, -18, -19),
+                            1.25, 12.668_in, 1.5_in,
+                            pros::v5::MotorGears::blue);
 
 pros::Controller master(pros::E_CONTROLLER_MASTER);
 
@@ -31,6 +31,12 @@ void initialize() {
   pros::lcd::initialize();
   pros::lcd::set_text(1, "Hello PROS User!");
 
+  static_assert(vilot::OrientationProvider<device::Imu>);
+  static_assert(vilot::RotationEncoderProvider<device::Rotation>);
+  static_assert(vilot::Startable<device::Imu>);
+  static_assert(vilot::Startable<device::Rotation>);
+
+  odom.start();
   // imu.start();
   // bool start_success = odom.start();
   // if (start_success) {
