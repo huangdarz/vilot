@@ -1,10 +1,12 @@
 #include "main.h"
+#include <cmath>
 #include <string>
 #include "liblvgl/llemu.hpp"
 #include "pros/abstract_motor.hpp"
 #include "pros/misc.h"
 #include "pros/rtos.hpp"
 #include "units.h"
+#include "vilot/controller.hpp"
 #include "vilot/drivetrain.hpp"
 #include "vilot/localisation.hpp"
 
@@ -13,11 +15,26 @@ using namespace vilot;
 
 device::Imu imu(7);
 device::Rotation rot(4);
-Odometry odom(imu, rot, 16.5_mm, 131.9_mm);
+Odometry odom(imu, rot, -16.5_mm, 131.9_mm);
 
 DifferentialChassis chassis(PORTS(11, -12, 13, 14), PORTS(-16, 17, -18, -19),
                             1.25, 12.668_in, 1.5_in,
                             pros::v5::MotorGears::blue);
+
+LateralProfileController<decltype(odom), true> mocon(
+    chassis, odom,
+    {.max_velocity = 1.92_mps,
+     .acceleration = 1.5_mps_sq,
+     .deceleration = 0.6_mps_sq});
+
+RotationPidController rotpid(chassis, odom,  // NOLINT
+                             {.kP = 1, .kI = 0, .kD = 0},
+                             {.condition =
+                                  [](const float m, const float g) {
+                                    return std::fabs(m - g) < 0.5;
+                                  },
+                              .settle_time_ms = 400},
+                             3_deg_per_s);
 
 pros::Controller master(pros::E_CONTROLLER_MASTER);
 
@@ -36,23 +53,20 @@ void initialize() {
   static_assert(vilot::Startable<device::Imu>);
   static_assert(vilot::Startable<device::Rotation>);
 
-  odom.start();
-  // imu.start();
-  // bool start_success = odom.start();
-  // if (start_success) {
-  //   master.rumble(". .");
-  // } else {
-  //   master.rumble("- - -");
-  // }
-  // pros::Task([=]() {
-  //   while (true) {
-  //     auto state = odom.get_state();
-  //     printf("Heading: %f | X: %f\n",
-  //            state.pose.theta.convert<units::angle::degree>().value(),
-  //            state.pose.x.value());
-  //     pros::Task::delay(500);
-  //   }
-  // });
+  if (odom.start()) {
+    master.rumble(". .");
+  } else {
+    master.rumble("- - -");
+  }
+  pros::Task([=]() __attribute__((__noreturn__)) {
+    while (true) {
+      auto state = odom.get_pose();
+      printf("Heading: %f | X: %f\n",
+             state.theta().convert<units::angle::degree>().value(),
+             state.x().value());
+      pros::Task::delay(500);
+    }
+  });
 }
 
 void disabled() {}
@@ -60,11 +74,15 @@ void disabled() {}
 void competition_initialize() {}
 
 void autonomous() {
-  // vilot::SettleCondition cond{
-  //     .condition = [](float m, float g) { return fabs(m - g) < 0.5; },
-  //     .settle_time = 400};
-  // vilot::PidConstants kon(1, 0, 0);
-  //
+  // mocon.follow(2_m, 3.2, 0.05);
+  // rotpid.rotate_to(90_deg, 10000_ms);
+  // mocon.follow(2_m, 3.2, 0.05);
+  rotpid.rotate_to(180_deg, 10000_ms);
+  mocon.follow(2_m, 3.2, 0.05);
+  // rotpid.rotate_to(-90_deg, 10000_ms);
+  // mocon.follow(2_m, 3.2, 0.05);
+  // rotpid.rotate_to(0_deg, 10000_ms);
+
   // bot.follow(2_m, 1.92_mps, 1.5_mps_sq, 0.6_mps_sq, 3.2, 0.05);
   // bot.rotate_to(90_deg, kon, cond, 5_deg_per_s, 10000_ms);
   // bot.follow(2_m, 1.92_mps, 1.5_mps_sq, 0.6_mps_sq, 3.2, 0.05);

@@ -1,17 +1,25 @@
 #include "vilot/pid.hpp"
-#include "pros/rtos.hpp"
 #include <algorithm>
 #include <cmath>
+#include "pros/rtos.hpp"
 
 using namespace units::time;
 
 namespace vilot {
 
 PidController::PidController(PidConstants constants, const second_t sample_time)
-    : kP(constants.kP), kI(constants.kI), kD(constants.kD), kF(constants.kF),
-      tau(0.01), sample_time(sample_time), abs_max_output(600.0),
-      integrator(0.0), prev_error(0.0), differentiator(0.0),
-      prev_measurement(0.0), is_continuous_input(false),
+    : kP(constants.kP),
+      kI(constants.kI),
+      kD(constants.kD),
+      kF(constants.kF),
+      tau(0.01),
+      sample_time(sample_time),
+      abs_max_output(600.0),
+      integrator(0.0),
+      prev_error(0.0),
+      differentiator(0.0),
+      prev_measurement(0.0),
+      is_continuous_input(false),
       input_modulus(-M_PI, M_PI) {}
 
 float PidController::calculate(float measurement, float setpoint) {
@@ -70,7 +78,9 @@ void PidController::reset() {
   this->prev_measurement = 0.0;
 }
 
-float PidController::get_abs_max_output() { return this->abs_max_output; }
+float PidController::get_abs_max_output() {
+  return this->abs_max_output;
+}
 
 float PidController::get_min_input() {
   return this->input_modulus.get_min_input();
@@ -80,7 +90,9 @@ float PidController::get_max_input() {
   return this->input_modulus.get_max_input();
 }
 
-bool PidController::get_continuous_input() { return this->is_continuous_input; }
+bool PidController::get_continuous_input() {
+  return this->is_continuous_input;
+}
 
 void PidController::set_abs_max_output(float abs_max_output) {
   this->abs_max_output = abs_max_output;
@@ -110,8 +122,8 @@ bool SettleCondition::check(float measurement, float goal) {
     this->prev_success = false;
     this->prev_time = pros::millis();
   }
-  return pros::millis() - this->prev_time >= this->settle_time &&
+  return pros::millis() - this->prev_time >= this->settle_time_ms &&
          this->prev_success;
 }
 
-} // namespace vilot
+}  // namespace vilot

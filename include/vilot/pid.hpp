@@ -1,8 +1,8 @@
 #pragma once
 
+#include <functional>
 #include "units.h"
 #include "vilot/filter.h"
-#include <functional>
 
 namespace vilot {
 
@@ -13,14 +13,14 @@ namespace vilot {
  * gains used by the PID controller.
  */
 struct PidConstants {
-  float kP; ///< Proportional gain - affects how aggressively the controller
-            ///< responds to current error
-  float kI; ///< Integral gain - affects how aggressively the controller
-            ///< responds to accumulated error over time
-  float kD; ///< Derivative gain - affects how aggressively the controller
-            ///< responds to rate of error change
+  float kP;  ///< Proportional gain - affects how aggressively the controller
+             ///< responds to current error
+  float kI;  ///< Integral gain - affects how aggressively the controller
+             ///< responds to accumulated error over time
+  float kD;  ///< Derivative gain - affects how aggressively the controller
+             ///< responds to rate of error change
   float kF =
-      0.0; ///< Feedforward gain - provides predictive control based on setpoint
+      0.0;  ///< Feedforward gain - provides predictive control based on setpoint
 };
 
 /**
@@ -45,7 +45,7 @@ struct PidConstants {
  * error to prevent derivative kick when the setpoint changes suddenly.
  */
 class PidController {
-public:
+ public:
   PidController() = delete;
 
   /**
@@ -145,7 +145,7 @@ public:
    */
   void set_continuous_input(bool is_continuous_input);
 
-private:
+ private:
   float kP;
   float kI;
   float kD;
@@ -166,11 +166,11 @@ private:
 struct SettleCondition {
   // basically if its within the tolerance for a set amount of time
   std::function<bool(float, float)> condition;
-  const uint32_t settle_time;
+  const uint32_t settle_time_ms;
   uint32_t prev_time;
   bool prev_success;
 
   bool check(float measurement, float goal);
 };
 
-} // namespace vilot
+}  // namespace vilot
