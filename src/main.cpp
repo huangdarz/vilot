@@ -68,8 +68,8 @@ void disabled() {}
 void competition_initialize() {}
 
 void autonomous() {
-  mocon.follow(2_m, 3.2, 0.05);
-  // rotpid.rotate_to(90_deg, 10000_ms);
+  // mocon.follow(2_m, 3.2, 0.05);
+  rotpid.rotate_to(90_deg, 10000_ms);
   // mocon.follow(2_m, 3.2, 0.05);
   // rotpid.rotate_to(180_deg, 10000_ms);
   // mocon.follow(2_m, 3.2, 0.05);
