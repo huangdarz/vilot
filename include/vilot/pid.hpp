@@ -173,4 +173,6 @@ struct SettleCondition {
   bool check(float measurement, float goal);
 };
 
+std::function<bool(float, float)> absolute_tolerance(float tolerance) noexcept;
+
 }  // namespace vilot

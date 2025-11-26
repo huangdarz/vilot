@@ -24,7 +24,7 @@ void DeadReckoning::update(const radian_t yaw, const degree_t parallel,
   const auto parallel_displacement =
       meter_t(parallel() / (360.0 / this->wheel_circumference()));
   const meter_t perpendicular_displacement =
-      this->middle_distance()
+      this->middle_distance() == 0.0
           ? meter_t(0.0)
           : meter_t(perpendicular() / (360.0 / this->middle_distance()));
 
@@ -41,7 +41,7 @@ void DeadReckoning::update(const radian_t yaw, const degree_t parallel,
 
   Eigen::Vector2f local_displacement(0, 0);
 
-  if (delta_theta()) {
+  if (!std::isnan(delta_theta()) && delta_theta() != 0.0) {
     const float scalar = std::sin(delta_theta() / 2.0) * 2.0;
     local_displacement = {(delta_parallel_displacement() / delta_theta() -
                            this->centre_displacement()) *

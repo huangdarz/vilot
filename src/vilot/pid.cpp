@@ -126,4 +126,10 @@ bool SettleCondition::check(float measurement, float goal) {
          this->prev_success;
 }
 
+std::function<bool(float, float)> absolute_tolerance(float tolerance) noexcept {
+  return [tolerance](const float m, const float g) {
+    return std::fabs(m - g) < tolerance;
+  };
+}
+
 }  // namespace vilot
