@@ -3,8 +3,7 @@
 
 namespace vilot {
 
-constexpr float s_curve_filter(float input, float strength,
-                               float max_input) noexcept {
+float s_curve_filter(float input, float strength, float max_input) noexcept {
   float abs_max_input = std::abs(max_input);
   float weight = std::exp(-0.1 * strength);
   return (weight +
@@ -12,8 +11,7 @@ constexpr float s_curve_filter(float input, float strength,
          input;
 }
 
-constexpr float ramp_curve_filter(float input, float strength,
-                                  float max_input) noexcept {
+float ramp_curve_filter(float input, float strength, float max_input) noexcept {
   float abs_max_input = std::abs(max_input);
   float weight = std::exp(-0.1 * strength);
   return (weight +
@@ -21,8 +19,8 @@ constexpr float ramp_curve_filter(float input, float strength,
          input;
 }
 
-constexpr float deadzone_filter(float input, float min_output,
-                                float max_output) noexcept {
+float deadzone_filter(float input, float min_output,
+                      float max_output) noexcept {
   float abs_min_output = std::abs(min_output);
   float abs_max_output = std::abs(max_output);
   if (input < abs_min_output && input > -abs_min_output) {
@@ -38,7 +36,9 @@ BiquadLowPassFilter::BiquadLowPassFilter(float sample_rate, float cutoff_freq) {
   z1 = z2 = 0.0;
 }
 
-void BiquadLowPassFilter::reset() { z1 = z2 = 0.0; }
+void BiquadLowPassFilter::reset() {
+  z1 = z2 = 0.0;
+}
 
 void BiquadLowPassFilter::set_cutoff_frequency(float sample_rate,
                                                float cutoff_freq) {
@@ -86,7 +86,9 @@ float ExpDecayFilter::apply(float input, units::time::second_t dt) {
   return val;
 }
 
-void ExpDecayFilter::reset() { this->prev = 0; }
+void ExpDecayFilter::reset() {
+  this->prev = 0;
+}
 
 float input_modulus_filter(float input, float min_input, float max_input) {
   float range = max_input - min_input;
@@ -116,8 +118,12 @@ float InputModulusFilter::apply(float input) {
   return input_modulus_filter(input, this->min_input, this->max_input);
 }
 
-float InputModulusFilter::get_min_input() { return this->min_input; }
+float InputModulusFilter::get_min_input() {
+  return this->min_input;
+}
 
-float InputModulusFilter::get_max_input() { return this->max_input; }
+float InputModulusFilter::get_max_input() {
+  return this->max_input;
+}
 
-} // namespace vilot
+}  // namespace vilot

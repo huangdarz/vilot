@@ -21,11 +21,8 @@ namespace vilot {
  * curve)
  * @param max_input The maximum expected input value for normalization
  * @return The filtered output value
- *
- * @note This function is constexpr and can be evaluated at compile time
  */
-constexpr float s_curve_filter(float input, float strength,
-                               float max_input) noexcept;
+float s_curve_filter(float input, float strength, float max_input) noexcept;
 
 /**
  * @brief Apply ramp curve filtering to input signal
@@ -43,11 +40,8 @@ constexpr float s_curve_filter(float input, float strength,
  * @param strength The strength of the ramp effect
  * @param max_input The maximum expected input value for normalization
  * @return The filtered output value
- *
- * @note This function is constexpr and can be evaluated at compile time
  */
-constexpr float ramp_curve_filter(float input, float strength,
-                                  float max_input) noexcept;
+float ramp_curve_filter(float input, float strength, float max_input) noexcept;
 
 /**
  * @brief Apply deadzone filtering to eliminate small unwanted signals
@@ -65,11 +59,8 @@ constexpr float ramp_curve_filter(float input, float strength,
  * @param min_output The minimum threshold below which output is zero
  * @param max_output The maximum expected output value for scaling
  * @return The filtered output value (0 in deadzone, scaled otherwise)
- *
- * @note This function is constexpr and can be evaluated at compile time
  */
-constexpr float deadzone_filter(float input, float min_output,
-                                float max_output) noexcept;
+float deadzone_filter(float input, float min_output, float max_output) noexcept;
 
 /**
  * @brief Biquadratic low-pass filter for signal smoothing
@@ -95,7 +86,7 @@ constexpr float deadzone_filter(float input, float min_output,
  *       Use separate instances for concurrent processing.
  */
 class BiquadLowPassFilter {
-public:
+ public:
   BiquadLowPassFilter() = delete;
 
   /**
@@ -149,9 +140,9 @@ public:
    */
   float apply(float input);
 
-private:
-  float a0, a1, a2, b1, b2; ///< Filter coefficients (feedforward and feedback)
-  float z1, z2;             ///< Delay elements (previous input samples)
+ private:
+  float a0, a1, a2, b1, b2;  ///< Filter coefficients (feedforward and feedback)
+  float z1, z2;              ///< Delay elements (previous input samples)
 
   /**
    * @brief Initialize filter coefficients
@@ -212,7 +203,7 @@ constexpr float exp_decay_filter(const float a, const float b,
  * use.
  */
 class ExpDecayFilter {
-public:
+ public:
   ExpDecayFilter() = delete;
 
   /**
@@ -247,9 +238,9 @@ public:
    */
   void reset();
 
-private:
-  float prev;  ///< Previous output value for state continuity
-  float decay; ///< Decay rate constant controlling filter response speed
+ private:
+  float prev;   ///< Previous output value for state continuity
+  float decay;  ///< Decay rate constant controlling filter response speed
 };
 
 /**
@@ -303,7 +294,7 @@ float input_modulus_filter(float input, float min_input, float max_input);
  * changes.
  */
 class InputModulusFilter {
-public:
+ public:
   /**
    * @brief Construct an input modulus filter
    *
@@ -340,9 +331,9 @@ public:
    */
   float get_max_input();
 
-private:
-  float min_input; ///< Minimum value of the allowed range
-  float max_input; ///< Maximum value of the allowed range
+ private:
+  float min_input;  ///< Minimum value of the allowed range
+  float max_input;  ///< Maximum value of the allowed range
 };
 
-} // namespace vilot
+}  // namespace vilot

@@ -3,6 +3,7 @@
 #include "drivetrain.hpp"
 #include "localisation.hpp"
 #include "ramsete.hpp"
+#include "vilot/filter.hpp"
 #include "voyage/motionprofile.hpp"
 
 namespace vilot {
@@ -188,6 +189,70 @@ class RotationPidController {
   PidConstants constants;
   SettleCondition settle_condition;
   degrees_per_second_t min_speed;
+};
+
+enum class DriveCurveType { Linear, Exponential, Ramp };
+
+template <DriveCurveType Curve>
+class DriverController {
+ public:
+  DriverController(DifferentialChassis& chassis, const uint32_t deadzone,
+                   const float decay)
+      : chassis(chassis),
+        deadzone(deadzone),
+        decay_filter_one(decay),
+        decay_filter_two(decay) {}
+
+  void arcade(const int32_t forward, const int32_t turn,
+              const units::time::millisecond_t dt) noexcept
+      requires(Curve == DriveCurveType::Linear) {
+    const float forward_dead =
+        deadzone_filter(static_cast<float>(forward),
+                        static_cast<float>(this->deadzone), 127.0f);
+    const float turn_dead = deadzone_filter(
+        static_cast<float>(turn), static_cast<float>(this->deadzone), 127.0f);
+
+    const float forward_decay = this->decay_filter_one.apply(forward_dead, dt);
+    const float turn_decay = this->decay_filter_two.apply(turn_dead, dt);
+
+    chassis.move(units::voltage::millivolt_t(forward_decay),
+                 units::voltage::millivolt_t(turn_decay));
+  }
+
+  void arcade(const int32_t forward, const int32_t turn,
+              const units::time::millisecond_t dt, const float forward_strength,
+              const float turn_strength) noexcept
+      requires(Curve != DriveCurveType::Linear) {
+    const float forward_dead =
+        deadzone_filter(static_cast<float>(forward),
+                        static_cast<float>(this->deadzone), 127.0f);
+    const float turn_dead = deadzone_filter(
+        static_cast<float>(turn), static_cast<float>(this->deadzone), 127.0f);
+
+    const float forward_decay = this->decay_filter_one.apply(forward_dead, dt);
+    const float turn_decay = this->decay_filter_two.apply(turn_dead, dt);
+
+    if constexpr (Curve == DriveCurveType::Ramp) {
+      const float forward_curve =
+          ramp_curve_filter(forward_decay, forward_strength, 127.0);
+      const float turn_curve =
+          ramp_curve_filter(turn_decay, turn_strength, 127.0);
+      chassis.move(units::voltage::millivolt_t(forward_curve),
+                   units::voltage::millivolt_t(turn_curve));
+    } else {
+      const float forward_curve =
+          s_curve_filter(forward_decay, forward_strength, 127.0);
+      const float turn_curve = s_curve_filter(turn_decay, turn_strength, 127.0);
+      chassis.move(units::voltage::millivolt_t(forward_curve),
+                   units::voltage::millivolt_t(turn_curve));
+    }
+  }
+
+ private:
+  DifferentialChassis& chassis;
+  uint32_t deadzone;
+  ExpDecayFilter decay_filter_one;
+  ExpDecayFilter decay_filter_two;
 };
 
 }  // namespace vilot

@@ -33,6 +33,8 @@ RotationPidController rotpid(chassis, odom,  // NOLINT
                               .settle_time_ms = 500},
                              3_deg_per_s);
 
+DriverController<DriveCurveType::Exponential> driver_controller(chassis, 2, 6);
+
 pros::Controller master(pros::E_CONTROLLER_MASTER);
 
 /**
@@ -100,6 +102,8 @@ void opcontrol() {
     // bot.move(units::voltage::millivolt_t(left_y * 12000),
     //          units::voltage::millivolt_t(right_x * 12000));
 
+    driver_controller.arcade(master.get_analog(ANALOG_LEFT_Y),
+                             master.get_analog(ANALOG_RIGHT_X), 25_ms, 13, 13);
     pros::Task::delay_until(&time, 25);
   }
 }
