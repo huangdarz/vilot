@@ -3,6 +3,7 @@
 #include "Eigen/Dense"
 #include "pros/imu.hpp"
 #include "units.h"
+#include "vilot/util.hpp"
 
 namespace vilot {
 
@@ -394,5 +395,8 @@ class Imu {
   bool is_calibrating;      ///< Flag indicating calibration status
   mutable pros::Mutex mut;  ///< Mutex for thread-safe filter access
 };
+
+static_assert(vilot::OrientationProvider<Imu>);
+static_assert(vilot::Startable<Imu>);
 
 }  // namespace vilot::device

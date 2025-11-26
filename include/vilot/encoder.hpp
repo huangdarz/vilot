@@ -4,6 +4,7 @@
 #include "pros/rtos.hpp"
 #include "units.h"
 #include "vilot/filter.h"
+#include "vilot/util.hpp"
 
 namespace vilot {
 
@@ -66,5 +67,8 @@ class Rotation {
   mutable pros::MutexVar<degree_t> position;
   mutable pros::MutexVar<degrees_per_second_t> velocity;
 };
+
+static_assert(vilot::RotationEncoderProvider<Rotation>);
+static_assert(vilot::Startable<Rotation>);
 
 }  // namespace vilot::device

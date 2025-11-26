@@ -45,11 +45,6 @@ void initialize() {
   pros::lcd::initialize();
   pros::lcd::set_text(1, "Hello PROS User!");
 
-  static_assert(vilot::OrientationProvider<device::Imu>);
-  static_assert(vilot::RotationEncoderProvider<device::Rotation>);
-  static_assert(vilot::Startable<device::Imu>);
-  static_assert(vilot::Startable<device::Rotation>);
-
   if (odom.start()) {
     master.rumble(". .");
   } else {
