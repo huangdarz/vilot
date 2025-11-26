@@ -3,7 +3,7 @@
 #include "pros/rotation.hpp"
 #include "pros/rtos.hpp"
 #include "units.h"
-#include "vilot/filter.h"
+#include "vilot/filter.hpp"
 #include "vilot/util.hpp"
 
 namespace vilot {

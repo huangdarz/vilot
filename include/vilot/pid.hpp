@@ -2,7 +2,7 @@
 
 #include <functional>
 #include "units.h"
-#include "vilot/filter.h"
+#include "vilot/filter.hpp"
 
 namespace vilot {
 

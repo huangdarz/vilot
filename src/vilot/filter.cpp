@@ -1,4 +1,4 @@
-#include "vilot/filter.h"
+#include "vilot/filter.hpp"
 #include <cmath>
 
 namespace vilot {
