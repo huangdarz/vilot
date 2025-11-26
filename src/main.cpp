@@ -13,13 +13,13 @@
 using namespace units::literals;
 using namespace vilot;
 
-device::Imu imu(7);
-device::Rotation rot(4);
-Odometry odom(imu, rot, -162_mm, 131.9_mm);
+device::Imu imu(12);
+// device::Rotation rot(4);
+device::Encoder enc('G', 'H', true);
+Odometry odom(imu, enc, -97_mm, 131.9_mm);
 
-DifferentialChassis chassis(PORTS(11, -12, 13, 14), PORTS(-16, 17, -18, -19),
-                            1.25, 12.668_in, 1.5_in,
-                            pros::v5::MotorGears::blue);
+DifferentialChassis chassis(PORTS(7, -8, 9, 10), PORTS(-17, 18, -19, -20), 1.0,
+                            336_mm, 1.5_in, pros::v5::MotorGears::blue);
 
 LateralProfileController<decltype(odom), true> mocon(
     chassis, odom,
@@ -69,7 +69,7 @@ void competition_initialize() {}
 
 void autonomous() {
   mocon.follow(2_m, 3.2, 0.05);
-  rotpid.rotate_to(90_deg, 10000_ms);
+  // rotpid.rotate_to(90_deg, 10000_ms);
   // mocon.follow(2_m, 3.2, 0.05);
   // rotpid.rotate_to(180_deg, 10000_ms);
   // mocon.follow(2_m, 3.2, 0.05);
@@ -87,6 +87,7 @@ void autonomous() {
 
 void opcontrol() {
   auto time = pros::millis();
+
   while (true) {
     // pros::lcd::set_text(
     //     1,
@@ -104,6 +105,7 @@ void opcontrol() {
 
     driver_controller.arcade(master.get_analog(ANALOG_LEFT_Y),
                              master.get_analog(ANALOG_RIGHT_X), 25_ms, 13, 13);
+
     pros::Task::delay_until(&time, 25);
   }
 }
