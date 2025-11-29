@@ -1,8 +1,10 @@
 #include "vilot/inertial.hpp"
 #include <cstdio>
 #include "etl/circular_buffer.h"
+#include "pros/error.h"
 #include "pros/rtos.h"
 #include "pros/rtos.hpp"
+#include "vilot/err.hpp"
 
 namespace vilot {
 
@@ -10,6 +12,8 @@ using namespace units::literals;
 using namespace units::angle;
 using namespace units::acceleration;
 using namespace units::angular_velocity;
+
+constexpr float EPSILON = std::numeric_limits<float>::epsilon();
 
 Madgwick::Madgwick(const hertz_t sample_freq, const float beta)
     : sample_freq(sample_freq()),
@@ -42,7 +46,8 @@ void Madgwick::calculate(const radians_per_second_t gx,
 
   // Compute feedback only if accelerometer measurement valid (avoids NaN in
   // accelerometer normalisation)
-  if (!((_ax == 0.0f) && (_ay == 0.0f) && (_az == 0.0f))) {
+  if (!((std::abs(_ax) < EPSILON) && (std::abs(_ay) < EPSILON) &&
+        (std::abs(_az) < EPSILON))) {
 
     // Normalise accelerometer measurement
     recipNorm = inv_sqrt(_ax * _ax + _ay * _ay + _az * _az);
@@ -258,12 +263,17 @@ uint8_t Imu::get_port() const {
   return this->inertial.get_port();
 }
 
-[[noreturn]] void Imu::update() {
+void Imu::update() {
   pros::Task::notify_take(true, TIMEOUT_MAX);
   auto start = pros::millis();
   for (;;) {
     const auto [gx, gy, gz] = this->inertial.get_gyro_rate();
     const auto [ax, ay, az] = this->inertial.get_accel();
+
+    if (gx == PROS_ERR_F || ax == PROS_ERR_F) {
+      ErrorHandler::get_instance().report();
+      return;
+    }
 
     mut.lock();
     this->filter.calculate(degrees_per_second_t(static_cast<float>(gx)),

@@ -8,17 +8,17 @@
 #include "units.h"
 #include "vilot/controller.hpp"
 #include "vilot/drivetrain.hpp"
+#include "vilot/err.hpp"
 #include "vilot/localisation.hpp"
 
 using namespace units::literals;
 using namespace vilot;
 
-device::Imu imu(12);
-// device::Rotation rot(4);
-device::Encoder enc('G', 'H', true);
-Odometry odom(imu, enc, -97_mm, 131.9_mm);
+device::Imu imu(13);
+device::Encoder enc('C', 'D', false);
+Odometry odom(imu, enc, -92_mm, 131.9_mm);
 
-DifferentialChassis chassis(PORTS(7, -8, 9, 10), PORTS(-17, 18, -19, -20), 1.0,
+DifferentialChassis chassis(PORTS(7, -8, 9, 10), PORTS(-1, -2, 3, -4), 1.0,
                             336_mm, 1.5_in, pros::v5::MotorGears::blue);
 
 LateralProfileController<decltype(odom), true> mocon(
@@ -37,6 +37,8 @@ DriverController<DriveCurveType::Exponential> driver_controller(chassis, 2, 6);
 
 pros::Controller master(pros::E_CONTROLLER_MASTER);
 
+pros::Task auton_task = pros::Task::current();
+
 /**
  * Runs initialization code. This occurs as soon as the program is started.
  *
@@ -46,6 +48,13 @@ pros::Controller master(pros::E_CONTROLLER_MASTER);
 void initialize() {
   pros::lcd::initialize();
   pros::lcd::set_text(1, "Hello PROS User!");
+
+  ErrorHandler& ee = ErrorHandler::get_instance();
+  ee.register_handler([]() {
+    printf("Error\n");
+    auton_task.suspend();
+    chassis.stop();
+  });
 
   if (odom.start()) {
     master.rumble(". .");
@@ -68,8 +77,13 @@ void disabled() {}
 void competition_initialize() {}
 
 void autonomous() {
-  mocon.follow(2_m, 3.2, 0.05);
-  rotpid.rotate_to(90_deg, 10000_ms);
+  auton_task = pros::Task::current();
+  pros::Task abort_test([]() {
+    pros::delay(500);
+    ErrorHandler::get_instance().report();
+  });
+  mocon.follow(1_m, 3.2, 0.05);
+  // rotpid.rotate_to(90_deg, 10000_ms);
   // mocon.follow(2_m, 3.2, 0.05);
   // rotpid.rotate_to(180_deg, 10000_ms);
   // mocon.follow(2_m, 3.2, 0.05);
@@ -103,8 +117,8 @@ void opcontrol() {
     // bot.move(units::voltage::millivolt_t(left_y * 12000),
     //          units::voltage::millivolt_t(right_x * 12000));
 
-    driver_controller.arcade(master.get_analog(ANALOG_LEFT_Y),
-                             master.get_analog(ANALOG_RIGHT_X), 25_ms, 13, 13);
+    // driver_controller.arcade(master.get_analog(ANALOG_LEFT_Y),
+    //                          master.get_analog(ANALOG_RIGHT_X), 25_ms, 13, 13);
 
     pros::Task::delay_until(&time, 25);
   }

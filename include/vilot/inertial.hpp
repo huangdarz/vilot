@@ -387,7 +387,7 @@ class Imu {
    * @note This function is automatically started when the IMU object is created
    *       and runs until the object is destroyed.
    */
-  [[noreturn]] void update();
+  void update();
 
   pros::Task task;          ///< Background task for sensor reading
   pros::Imu inertial;       ///< PROS IMU sensor interface

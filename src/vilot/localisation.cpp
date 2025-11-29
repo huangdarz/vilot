@@ -41,9 +41,10 @@ void DeadReckoning::update(const radian_t yaw, const degree_t parallel,
 
   Eigen::Vector2f local_displacement(0, 0);
 
-  if (!std::isnan(delta_theta()) && delta_theta() != 0.0) {
+  if (!std::isnan(delta_theta()) && delta_theta() != 0.0 &&
+      std::abs(delta_theta()) > std::numeric_limits<float>::epsilon()) {
     const float scalar = std::sin(delta_theta() / 2.0) * 2.0;
-    local_displacement = {(delta_parallel_displacement() / delta_theta() -
+    local_displacement = {((delta_parallel_displacement() / delta_theta()) -
                            this->centre_displacement()) *
                               scalar,
                           (delta_perpendicular_displacement() / delta_theta()) +
