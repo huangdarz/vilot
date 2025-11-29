@@ -1,5 +1,7 @@
 #include "ramsete.hpp"
 
+#include "filter.hpp"
+
 namespace vilot {
 
 using meter_t = units::length::meter_t;
@@ -16,6 +18,7 @@ RamseteController::calculate(
   Eigen::Vector3f actual(_actual.x()(), _actual.y()(), _actual.theta()());
   Eigen::Vector3f desired(_desired.x()(), _desired.y()(), _desired.theta()());
   Eigen::Vector3f global_error = desired - actual;
+  global_error.z() = input_modulus_filter(global_error.z(), -M_PI, M_PI);
   Eigen::Matrix3f transformation;
   transformation << std::cosf(actual.z()), std::sinf(actual.z()), 0,
       -std::sinf(actual.z()), std::cosf(actual.z()), 0, 0, 0, 1;
